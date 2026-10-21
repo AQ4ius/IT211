@@ -138,23 +138,28 @@ function loadBuggyDfdPreset() {
 
 function loadPerfectDfdPreset() {
   dfdNodes = [
-    { id: "n1", type: "entity", name: "CUSTOMER", x: 40, y: 140 },
-    { id: "n2", type: "process", name: "1.0 COMPUTE SALES", x: 260, y: 140 },
-    { id: "n3", type: "store", name: "D1 PRODUCTS", x: 260, y: 20 },
-    { id: "n4", type: "store", name: "D2 SALES", x: 260, y: 280 },
-    { id: "n5", type: "entity", name: "CASHIER", x: 500, y: 140 }
+    { id: "n1", type: "entity", name: "CUSTOMER", x: 40, y: 80 },
+    { id: "n2", type: "process", name: "1.0 PROCESS ITEM PURCHASE", x: 270, y: 75 },
+    { id: "n3", type: "store", name: "D1 INVENTORY", x: 530, y: 80 },
+    { id: "n4", type: "entity", name: "CASHIER", x: 40, y: 230 },
+    { id: "n5", type: "store", name: "D2 SALES ARCHIVE", x: 270, y: 230 },
+    { id: "n6", type: "process", name: "2.0 UPDATE & RECONCILE", x: 530, y: 225 },
+    { id: "n7", type: "entity", name: "STORE MANAGER", x: 530, y: 375 }
   ];
 
   dfdConnections = [
-    { id: "c1", from: "n1", to: "n2", label: "Item_Info" },
-    { id: "c2", from: "n3", to: "n2", label: "Product_Details" },
-    { id: "c3", from: "n2", to: "n4", label: "Completed_Sale" },
-    { id: "c4", from: "n2", to: "n5", label: "Computed_Receipt" }
+    { id: "c1", from: "n1", to: "n2", label: "Item_Barcode" },
+    { id: "c2", from: "n3", to: "n2", label: "Price_And_Details" },
+    { id: "c3", from: "n2", to: "n4", label: "Computed_Receipt" },
+    { id: "c4", from: "n2", to: "n5", label: "Recorded_Sale" },
+    { id: "c5", from: "n5", to: "n6", label: "Sales_Audit_Data" },
+    { id: "c6", from: "n6", to: "n3", label: "Inventory_Adjustment" },
+    { id: "c7", from: "n6", to: "n7", label: "Daily_Revenue_Report" }
   ];
 
   renderDfd();
   auditDfdDiagram();
-  showToast("Loaded textbook balanced DFD preset!", "success");
+  showToast("Loaded textbook balanced DFD preset (Clean 100%)!", "success");
 }
 
 /* ========================================================
@@ -690,7 +695,7 @@ function auditDfdDiagram() {
       });
     }
 
-    const verbRegex = /\b(compute|process|calculate|generate|update|record|verify|produce|validate|admit|check|evaluate|enroll|enrol)\b/i;
+    const verbRegex = /\b(compute|process|calculate|generate|update|record|verify|produce|validate|admit|check|evaluate|enroll|enrol|reconcile|restock|audit|manage)\b/i;
     if (!verbRegex.test(proc.name)) {
       sinsFound.push({
         title: "Syntax Warning: Process Naming Convention",
