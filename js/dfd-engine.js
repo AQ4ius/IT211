@@ -406,6 +406,7 @@ function renderDfd() {
     }
 
     g.addEventListener('mousedown', (e) => onNodeMouseDown(e, node));
+    g.addEventListener('touchstart', (e) => onNodeTouchStart(e, node), { passive: false });
     g.addEventListener('click', (e) => onNodeClick(e, node));
 
     nodeGroup.appendChild(g);
@@ -413,13 +414,31 @@ function renderDfd() {
 }
 
 /* ========================================================
-   MOUSE EVENTS
+   MOUSE & TOUCH DRAG EVENTS (With Matrix-Accurate Coordinates)
    ======================================================== */
+function getSvgCoords(svg, clientX, clientY) {
+  if (svg && svg.getScreenCTM) {
+    const ctm = svg.getScreenCTM();
+    if (ctm) {
+      const pt = svg.createSVGPoint();
+      pt.x = clientX;
+      pt.y = clientY;
+      const transformed = pt.matrixTransform(ctm.inverse());
+      return { x: transformed.x, y: transformed.y };
+    }
+  }
+  const rect = svg ? svg.getBoundingClientRect() : { left: 0, top: 0 };
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
 function onNodeMouseDown(e, node) {
   if (currentCanvasMode !== 'move') return;
+  e.preventDefault();
   draggedNode = node;
-  dragOffset.x = e.clientX - node.x;
-  dragOffset.y = e.clientY - node.y;
+  const svg = document.getElementById('dfd-svg');
+  const svgPt = getSvgCoords(svg, e.clientX, e.clientY);
+  dragOffset.x = svgPt.x - node.x;
+  dragOffset.y = svgPt.y - node.y;
 
   window.addEventListener('mousemove', onNodeMouseMove);
   window.addEventListener('mouseup', onNodeMouseUp);
@@ -427,8 +446,10 @@ function onNodeMouseDown(e, node) {
 
 function onNodeMouseMove(e) {
   if (!draggedNode) return;
-  draggedNode.x = Math.max(10, Math.min(800, e.clientX - dragOffset.x));
-  draggedNode.y = Math.max(10, Math.min(500, e.clientY - dragOffset.y));
+  const svg = document.getElementById('dfd-svg');
+  const svgPt = getSvgCoords(svg, e.clientX, e.clientY);
+  draggedNode.x = Math.max(10, Math.min(620, Math.round(svgPt.x - dragOffset.x)));
+  draggedNode.y = Math.max(10, Math.min(420, Math.round(svgPt.y - dragOffset.y)));
   renderDfd();
 }
 
@@ -436,6 +457,41 @@ function onNodeMouseUp() {
   draggedNode = null;
   window.removeEventListener('mousemove', onNodeMouseMove);
   window.removeEventListener('mouseup', onNodeMouseUp);
+}
+
+function onNodeTouchStart(e, node) {
+  if (e.touches.length > 1) return;
+  if (currentCanvasMode === 'move') {
+    if (e.cancelable) e.preventDefault();
+    draggedNode = node;
+    const touch = e.touches[0];
+    const svg = document.getElementById('dfd-svg');
+    const svgPt = getSvgCoords(svg, touch.clientX, touch.clientY);
+    dragOffset.x = svgPt.x - node.x;
+    dragOffset.y = svgPt.y - node.y;
+
+    window.addEventListener('touchmove', onNodeTouchMove, { passive: false });
+    window.addEventListener('touchend', onNodeTouchEnd);
+    window.addEventListener('touchcancel', onNodeTouchEnd);
+  }
+}
+
+function onNodeTouchMove(e) {
+  if (!draggedNode) return;
+  if (e.cancelable) e.preventDefault();
+  const touch = e.touches[0];
+  const svg = document.getElementById('dfd-svg');
+  const svgPt = getSvgCoords(svg, touch.clientX, touch.clientY);
+  draggedNode.x = Math.max(10, Math.min(620, Math.round(svgPt.x - dragOffset.x)));
+  draggedNode.y = Math.max(10, Math.min(420, Math.round(svgPt.y - dragOffset.y)));
+  renderDfd();
+}
+
+function onNodeTouchEnd() {
+  draggedNode = null;
+  window.removeEventListener('touchmove', onNodeTouchMove);
+  window.removeEventListener('touchend', onNodeTouchEnd);
+  window.removeEventListener('touchcancel', onNodeTouchEnd);
 }
 
 function onNodeClick(e, node) {
