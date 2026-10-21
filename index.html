@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IT 211 RAM • Systems Analyst AI Training Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- TOP HEADER -->
+<header class="app-header">
+  <div class="nav-inner">
+    <div class="brand-group">
+      <div class="brand-logo">RAM</div>
+      <div class="brand-text">
+        <h1>IT 211 RAM • Systems Analyst AI Trainer</h1>
+        <p>Requirements Engineering &amp; Process Modeling Simulator</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab-btn active" onclick="switchTab('essay-tab')">
+        <span>✍️</span> Essay AI Grader
+      </button>
+      <button class="nav-tab-btn" onclick="switchTab('dfd-tab')">
+        <span>📊</span> Interactive DFD Lab
+      </button>
+      <button class="nav-tab-btn" onclick="switchTab('flashcard-tab')">
+        <span>🎴</span> Active Recall Cards
+      </button>
+      <button class="nav-tab-btn" onclick="switchTab('audit-tab')">
+        <span>🔍</span> Why 6/30 Happened
+      </button>
+    </nav>
+
+    <div class="header-actions">
+      <div class="stats-pill">
+        <span>🎯 Mode:</span> <strong>Petty Professor Strict</strong>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN APP SURFACE -->
+<main class="app-container">
+
+  <!-- ========================================================
+       TAB 1: ESSAY TRAINING & REGEX CHECKING ENGINE
+       ======================================================== -->
+  <section id="essay-tab" class="tab-pane active">
+    <div class="essay-layout">
+      <!-- Left: Question & Input -->
+      <div class="card">
+        <div class="card-header">
+          <h2><span>📝</span> Essay Diagnostic Arena</h2>
+          <button class="btn btn-outline" onclick="loadRandomQuestion()">
+            <span>🎲</span> Random Question
+          </button>
+        </div>
+
+        <div class="prompt-box">
+          <span class="category-tag" id="q-category">MODULE 3: DFD FUNDAMENTALS</span>
+          <h3 id="q-title">Explain the Principle of Balancing in DFDs and why it enforces Conservation of Data.</h3>
+          <p id="q-desc">Your response will be parsed by the automated regex keyword grader. The grader scans for canonical definitions, mandatory nouns/verbs, and penalty conditions.</p>
+        </div>
+
+        <div class="essay-tools-bar">
+          <div class="live-word-count">Words: <span id="word-count" style="font-weight: 800; color: var(--dark);">0</span> | Characters: <span id="char-count" style="font-weight: 800; color: var(--dark);">0</span></div>
+          <div>Target: <strong>≥ 75 words</strong> (Token dense)</div>
+        </div>
+
+        <div class="essay-textarea-wrapper">
+          <textarea id="essay-text" class="essay-input" placeholder="Type your academic response here... Avoid conversational filler. Pack every sentence with technical nouns, governing constraints, contrast pairs, and concrete slide examples..." oninput="updateWordCount()"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button class="btn btn-outline" onclick="loadExemplarAnswer()">
+            <span>💡</span> Load Model 30/30 Answer
+          </button>
+          <button class="btn btn-primary" onclick="gradeEssay()">
+            <span>⚡</span> Run Automated Exam Audit
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Automated Audit Output -->
+      <div class="grading-results-card">
+        <div class="grade-score-header">
+          <div class="score-circle-wrapper">
+            <div class="score-circle" id="score-circle">
+              <span class="big-num" id="score-val">--</span>
+              <span class="denom">/ 30</span>
+            </div>
+            <div class="score-title-group">
+              <h3 id="verdict-title">Awaiting Submission</h3>
+              <p id="verdict-subtitle">Click "Run Automated Exam Audit" to evaluate your essay.</p>
+            </div>
+          </div>
+          <span class="badge badge-blue" id="verdict-badge">IDLE</span>
+        </div>
+
+        <div class="metric-breakdown">
+          <div class="metric-pill">
+            <div class="lbl">Required Tokens</div>
+            <div class="val" id="metric-tokens">0 / 0</div>
+          </div>
+          <div class="metric-pill">
+            <div class="lbl">Token Density</div>
+            <div class="val" id="metric-density">0%</div>
+          </div>
+          <div class="metric-pill">
+            <div class="lbl">Penalty Triggers</div>
+            <div class="val" id="metric-penalties" style="color: var(--danger);">0</div>
+          </div>
+        </div>
+
+        <!-- System Regex Parser Output Console -->
+        <div class="regex-console">
+          <div class="regex-console-header">
+            <span>AUTOMATED REGEX PARSER LOG [TOKEN SCANNER]</span>
+            <span id="scan-status">WAITING</span>
+          </div>
+          <div id="regex-log-output">
+            <span style="color: #64748b;">// System listening for payload... Submit text to view detected and missing keyword patterns.</span>
+          </div>
+        </div>
+
+        <!-- In-Depth Diagnostic Feedback -->
+        <div class="feedback-box">
+          <h4 style="font-size: 0.85rem; font-weight: 800; color: var(--dark); margin-bottom: 6px;"><span>🔬</span> System Analyst Diagnostics:</h4>
+          <div id="detailed-feedback" style="color: var(--slate);">
+            Write an essay on the left and submit. The system will explain exactly what points were awarded, which technical terms were missing, and what deductions were applied.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       TAB 2: INTERACTIVE DFD LAB & MORTAL SIN LINTER
+       ======================================================== -->
+  <section id="dfd-tab" class="tab-pane">
+    <div class="dfd-workspace">
+      <!-- Left: Shapes & Scenarios -->
+      <div class="dfd-palette">
+        <div class="palette-title">Scenario Selector</div>
+        <select id="scenario-selector" onchange="changeScenario()" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.82rem; font-weight: 700;">
+          <option value="pos">Convenience Store POS System (P1.0)</option>
+          <option value="enroll">University Enrolment &amp; Payment (P2.0)</option>
+          <option value="atm">Automated Teller Machine (ATM P0)</option>
+        </select>
+        <p id="scenario-hint" style="font-size: 0.75rem; color: var(--muted); line-height: 1.4;">
+          Customer brings item. Cashier scans barcode. Sales record is updated and receipt is generated.
+        </p>
+
+        <div class="palette-title">Add Elements</div>
+        <div class="shape-item" onclick="addDfdNode('process')">
+          <div class="shape-preview process-gs">⚙️</div>
+          <div>
+            <div>Process Bubble</div>
+            <small style="color: var(--muted);">Verb-Object (e.g. 1.0 Compute Sales)</small>
+          </div>
+        </div>
+
+        <div class="shape-item" onclick="addDfdNode('entity')">
+          <div class="shape-preview entity">👤</div>
+          <div>
+            <div>External Entity</div>
+            <small style="color: var(--muted);">Noun (e.g. Customer, Cashier)</small>
+          </div>
+        </div>
+
+        <div class="shape-item" onclick="addDfdNode('store')">
+          <div class="shape-preview store-gs">🗄️</div>
+          <div>
+            <div>Data Store</div>
+            <small style="color: var(--muted);">ALL CAPS (e.g. D1 SALES)</small>
+          </div>
+        </div>
+
+        <div class="palette-title">Presets &amp; Tests</div>
+        <button class="btn btn-outline" style="width: 100%; font-size: 0.78rem;" onclick="loadBuggyDfdPreset()">
+          <span>⚠️</span> Load Diagram with "Mortal Sins"
+        </button>
+        <button class="btn btn-outline" style="width: 100%; font-size: 0.78rem;" onclick="loadPerfectDfdPreset()">
+          <span>⭐</span> Load Perfect Balanced DFD
+        </button>
+        <button class="btn btn-outline" style="width: 100%; font-size: 0.78rem; color: var(--danger);" onclick="clearDfdCanvas()">
+          <span>🗑️</span> Clear Canvas
+        </button>
+      </div>
+
+      <!-- Center: Canvas Area -->
+      <div class="dfd-canvas-container">
+        <div class="canvas-top-bar">
+          <div class="canvas-mode-group">
+            <button class="canvas-mode-btn active" id="btn-mode-move" onclick="setCanvasMode('move')">✋ Move / Select</button>
+            <button class="canvas-mode-btn" id="btn-mode-connect" onclick="setCanvasMode('connect')">🔗 Connect Flow (Arrow)</button>
+            <button class="canvas-mode-btn" id="btn-mode-delete" onclick="setCanvasMode('delete')">❌ Delete Element</button>
+          </div>
+          <span style="font-size: 0.75rem; font-weight: 700; color: var(--slate);" id="canvas-status">Mode: Select &amp; Drag</span>
+        </div>
+
+        <!-- SVG Interactive Surface -->
+        <svg id="dfd-svg" class="canvas-svg-board">
+          <defs>
+            <marker id="dfd-arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <polygon points="0 0, 8 4, 0 8" fill="#2563eb" />
+            </marker>
+            <marker id="dfd-arr-err" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <polygon points="0 0, 8 4, 0 8" fill="#dc2626" />
+            </marker>
+          </defs>
+
+          <!-- SVG Groups -->
+          <g id="svg-connections"></g>
+          <g id="svg-nodes"></g>
+        </svg>
+      </div>
+
+      <!-- Right: Real-time Mortal Sin Auditor -->
+      <div class="dfd-audit-panel">
+        <div class="card-header" style="margin-bottom: 6px; padding-bottom: 6px;">
+          <h2 style="font-size: 1rem;"><span>🛡️</span> Architecture Linter</h2>
+          <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.72rem;" onclick="auditDfdDiagram()">
+            Re-Audit
+          </button>
+        </div>
+
+        <div class="audit-summary-box clean" id="audit-summary-box">
+          <h3 id="audit-verdict-title" style="font-size: 1rem;">Architecture Clean</h3>
+          <p id="audit-verdict-desc" style="font-size: 0.72rem;">No mortal sins detected. Syntax rules satisfied.</p>
+        </div>
+
+        <div class="palette-title">Mortal Sins Detected</div>
+        <div class="sin-flag-list" id="sin-flag-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       TAB 3: ACTIVE RECALL FLASHCARDS (3D FLIP)
+       ======================================================== -->
+  <section id="flashcard-tab" class="tab-pane">
+    <div class="flashcard-wrapper">
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterCards('all')">All Modules</button>
+        <button class="filter-btn" onclick="filterCards('requirements')">Module 3: Requirements</button>
+        <button class="filter-btn" onclick="filterCards('dfd')">Module 3: DFD Rules</button>
+        <button class="filter-btn" onclick="filterCards('sins')">Topic 6: 10 Mortal Sins</button>
+        <button class="filter-btn" onclick="filterCards('usecases')">Module 4: UML Use Cases</button>
+      </div>
+
+      <!-- Card Scene for 3D Flip -->
+      <div class="card-scene" onclick="flipCard()">
+        <div class="flashcard" id="flashcard-element">
+          <!-- Front -->
+          <div class="card-face card-face-front">
+            <div class="card-top-tag">
+              <span class="badge badge-blue" id="fc-category">MODULE 3: DFD</span>
+              <span style="font-size: 0.78rem; font-weight: 700; color: var(--muted);" id="fc-counter">Card 1 / 18</span>
+            </div>
+            <div class="card-prompt-center">
+              <h3 id="fc-question">What is a "Gray Hole" in Data Flow Diagramming?</h3>
+              <p>Click anywhere to flip and reveal the strict professor textbook definition.</p>
+            </div>
+            <div class="card-hint">💡 Click or Tap to Flip 🔄</div>
+          </div>
+
+          <!-- Back -->
+          <div class="card-face card-face-back">
+            <div class="card-top-tag">
+              <span class="badge badge-green" id="fc-back-tag">CANONICAL DEFINITION</span>
+              <span style="font-size: 0.75rem; font-weight: 700; color: #94a3b8;">EXACT REGEX MATCH</span>
+            </div>
+            <div class="card-prompt-center">
+              <h3>Answer &amp; Critical Keywords:</h3>
+              <p id="fc-answer"></p>
+            </div>
+            <div class="card-hint" style="color: #94a3b8;">Click again to flip back</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="flashcard-nav">
+        <button class="btn btn-outline" onclick="prevCard()"><span>⬅️</span> Previous</button>
+        <button class="btn btn-primary" onclick="randomCard()"><span>🎲</span> Shuffle</button>
+        <button class="btn btn-outline" onclick="nextCard()">Next <span>➡️</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       TAB 4: REVERSE-ENGINEERED 6/30 AUDIT
+       ======================================================== -->
+  <section id="audit-tab" class="tab-pane">
+    <div class="card">
+      <div class="card-header">
+        <h2><span>🔍</span> Forensic Breakdown: Why You Got 6/30 Despite 290 Words</h2>
+        <span class="badge badge-red">Automated Grading Autopsy</span>
+      </div>
+
+      <div style="font-size: 0.9rem; line-height: 1.6; color: var(--slate); margin-bottom: 14px;">
+        Getting a <strong>6/30 (20%)</strong> after writing <strong>290 words</strong> is heartbreaking, but it reveals the exact mechanical vulnerability of automated checking systems. You wrote narrative, conversational English, while the checking system was running a strict <strong>regular expression token match</strong>.
+      </div>
+
+      <div class="audit-comparison-grid">
+        <!-- The 6/30 Mistake -->
+        <div class="comp-pane bad">
+          <h4><span>❌</span> How Most Students Write (Score: 6/30)</h4>
+          <p><em>"In our enrollment project, before a student can start picking their classes, they obviously have to finish taking their high school tests and get accepted into Saint Louis University through the admission office. Also, the data diagram shows how the student clicks the button on the screen and then the data goes from the student form directly into the database table so it saves. If they don't have internet, the system will just crash and they retry."</em></p>
+          <hr style="border: none; border-top: 1px dashed #fca5a5; margin: 12px 0;">
+          <div style="font-size: 0.78rem; color: #991b1b; line-height: 1.4;">
+            <strong>System Autopsy:</strong>
+            <ul>
+              <li>❌ <strong>Fatal Precondition Violation:</strong> Listed "high school tests" and "admission" as preconditions. These are real-world events outside the enrollment software boundary. (Deduction: -8 pts).</li>
+              <li>❌ <strong>Mortal Sin #3:</strong> Described data going "directly from form into database" (Entity to Data Store directly). (Deduction: -8 pts).</li>
+              <li>❌ <strong>UI Ban Violation:</strong> Mentioned "student clicks the button on the screen". UI details are strictly banned in analysis use cases. (Deduction: -5 pts).</li>
+              <li>❌ <strong>Zero Canonical Tokens:</strong> Missed <em>"internal system state", "action verb-object pair", "encapsulation", "conservation of data"</em>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- The 30/30 Blueprint -->
+        <div class="comp-pane good">
+          <h4><span>✔️</span> How a Systems Analyst Writes (Score: 30/30)</h4>
+          <p><em>"In UML behavioral modeling, <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">Use Case</span> specifications mandate that <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">preconditions</span> must represent <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">internal system states</span> set strictly <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">inside the software boundary</span> (e.g., authenticated student session). Real-world events like admission are external <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">assumptions</span>. Furthermore, in <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">process modeling</span>, <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">Mortal Sin #3</span> prohibits direct flows between <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">external entities and data stores</span>; all writes must be mediated by a <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">process bubble</span> with an <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">action verb-object pair</span> to maintain <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">data encapsulation</span>. In accordance with the analysis phase rules, <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">user interface details are omitted</span>."</em></p>
+          <hr style="border: none; border-top: 1px dashed #86efac; margin: 12px 0;">
+          <div style="font-size: 0.78rem; color: #166534; line-height: 1.4;">
+            <strong>System Autopsy:</strong>
+            <ul>
+              <li>✔️ <strong>100% Token Density:</strong> Matched 12 out of 12 required regex tokens in just 85 words.</li>
+              <li>✔️ <strong>Zero Traps Triggered:</strong> Correctly differentiated assumptions vs. preconditions.</li>
+              <li>✔️ <strong>Explicit Architectural Rationale:</strong> Cited encapsulation, boundaries, and syntax rules.</li>
+              <li>✔️ <strong>Score: 30 / 30</strong> in 15 seconds of execution.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- SCRIPTS -->
+<script src="js/questions.js"></script>
+<script src="js/flashcards.js"></script>
+<script src="js/dfd-engine.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
