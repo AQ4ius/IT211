@@ -34,7 +34,7 @@
         <span>🎴</span> Active Recall Cards
       </button>
       <button class="nav-tab-btn" onclick="switchTab('audit-tab')">
-        <span>🔍</span> Why 6/30 Happened
+        <span>🔍</span> Essay Forensics
       </button>
     </nav>
 
@@ -297,39 +297,39 @@
   </section>
 
   <!-- ========================================================
-       TAB 4: REVERSE-ENGINEERED 6/30 AUDIT
+       TAB 4: REVERSE-ENGINEERED ESSAY FORENSICS
        ======================================================== -->
   <section id="audit-tab" class="tab-pane">
     <div class="card">
       <div class="card-header">
-        <h2><span>🔍</span> Forensic Breakdown: Why You Got 6/30 Despite 290 Words</h2>
+        <h2><span>🔍</span> Forensic Breakdown: Conversational Fluff vs. Systems Analyst Precision</h2>
         <span class="badge badge-red">Automated Grading Autopsy</span>
       </div>
 
       <div style="font-size: 0.9rem; line-height: 1.6; color: var(--slate); margin-bottom: 14px;">
-        Getting a <strong>6/30 (20%)</strong> after writing <strong>290 words</strong> is heartbreaking, but it reveals the exact mechanical vulnerability of automated checking systems. You wrote narrative, conversational English, while the checking system was running a strict <strong>regular expression token match</strong>.
+        Writing lengthy, narrative paragraphs without technical tokens causes automated grading systems to reject or fail submissions. Automated checkers look strictly for <strong>regular expression token density</strong> and apply heavy penalties for boundary and syntax misconceptions.
       </div>
 
       <div class="audit-comparison-grid">
-        <!-- The 6/30 Mistake -->
+        <!-- The Common Mistake -->
         <div class="comp-pane bad">
-          <h4><span>❌</span> How Most Students Write (Score: 6/30)</h4>
+          <h4><span>❌</span> Common Student Response (Low Token Density &amp; Traps)</h4>
           <p><em>"In our enrollment project, before a student can start picking their classes, they obviously have to finish taking their high school tests and get accepted into Saint Louis University through the admission office. Also, the data diagram shows how the student clicks the button on the screen and then the data goes from the student form directly into the database table so it saves. If they don't have internet, the system will just crash and they retry."</em></p>
           <hr style="border: none; border-top: 1px dashed #fca5a5; margin: 12px 0;">
           <div style="font-size: 0.78rem; color: #991b1b; line-height: 1.4;">
             <strong>System Autopsy:</strong>
             <ul>
-              <li>❌ <strong>Fatal Precondition Violation:</strong> Listed "high school tests" and "admission" as preconditions. These are real-world events outside the enrollment software boundary. (Deduction: -8 pts).</li>
-              <li>❌ <strong>Mortal Sin #3:</strong> Described data going "directly from form into database" (Entity to Data Store directly). (Deduction: -8 pts).</li>
-              <li>❌ <strong>UI Ban Violation:</strong> Mentioned "student clicks the button on the screen". UI details are strictly banned in analysis use cases. (Deduction: -5 pts).</li>
+              <li>❌ <strong>Fatal Precondition Violation:</strong> Listed "high school tests" and "admission" as preconditions. These are real-world events outside the enrollment software boundary. (Violation: Out-of-Bounds Precondition).</li>
+              <li>❌ <strong>Mortal Sin #3:</strong> Described data going "directly from form into database" (Entity to Data Store directly). (Violation: Mortal Sin #3).</li>
+              <li>❌ <strong>UI Ban Violation:</strong> Mentioned "student clicks the button on the screen". UI details are strictly banned in analysis use cases. (Violation: Premature UI Coupling).</li>
               <li>❌ <strong>Zero Canonical Tokens:</strong> Missed <em>"internal system state", "action verb-object pair", "encapsulation", "conservation of data"</em>.</li>
             </ul>
           </div>
         </div>
 
-        <!-- The 30/30 Blueprint -->
+        <!-- The Exemplary Blueprint -->
         <div class="comp-pane good">
-          <h4><span>✔️</span> How a Systems Analyst Writes (Score: 30/30)</h4>
+          <h4><span>✔️</span> Systems Analyst Response (Full Token Density &amp; Syntax)</h4>
           <p><em>"In UML behavioral modeling, <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">Use Case</span> specifications mandate that <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">preconditions</span> must represent <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">internal system states</span> set strictly <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">inside the software boundary</span> (e.g., authenticated student session). Real-world events like admission are external <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">assumptions</span>. Furthermore, in <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">process modeling</span>, <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">Mortal Sin #3</span> prohibits direct flows between <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">external entities and data stores</span>; all writes must be mediated by a <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">process bubble</span> with an <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">action verb-object pair</span> to maintain <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">data encapsulation</span>. In accordance with the analysis phase rules, <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">user interface details are omitted</span>."</em></p>
           <hr style="border: none; border-top: 1px dashed #86efac; margin: 12px 0;">
           <div style="font-size: 0.78rem; color: #166534; line-height: 1.4;">
@@ -338,7 +338,7 @@
               <li>✔️ <strong>100% Token Density:</strong> Matched 12 out of 12 required regex tokens in just 85 words.</li>
               <li>✔️ <strong>Zero Traps Triggered:</strong> Correctly differentiated assumptions vs. preconditions.</li>
               <li>✔️ <strong>Explicit Architectural Rationale:</strong> Cited encapsulation, boundaries, and syntax rules.</li>
-              <li>✔️ <strong>Score: 30 / 30</strong> in 15 seconds of execution.</li>
+              <li>✔️ <strong>Evaluation:</strong> Verified Exemplary Architecture Response.</li>
             </ul>
           </div>
         </div>

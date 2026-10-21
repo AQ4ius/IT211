@@ -67,4 +67,4 @@ it211_training_arena/
 1. **Essay AI Grader:** Tests against the exact keywords, token density, and penalty traps checked by automated university grading bots.
 2. **Interactive DFD Builder:** Drag and drop processes, external entities, and data stores. The automated linter catches the 10 Mortal Sins (e.g. Store-to-Store, Entity-to-Store, Miracles, Black Holes, Recursive Loops).
 3. **Active Recall Flashcards:** 3D flipping flashcards with module filtering and textbook answers.
-4. **Forensics Tab:** Explains the mechanics of why a 290-word essay scored 6/30 and how an 85-word essay achieves a full 30/30.
+4. **Forensics Tab:** Explains the mechanics of token density, comparing conversational student writing against an exemplary Systems Analyst response.

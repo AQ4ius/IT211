@@ -135,7 +135,7 @@ function gradeEssay() {
     circle.className = "score-circle fail";
     badge.className = "badge badge-red";
     badge.innerText = "FAIL (DEDUCTIONS)";
-    vTitle.innerText = "Critical Failure (Like the 6/30)";
+    vTitle.innerText = "Critical Token Deficit";
     vSub.innerText = "Lacks canonical keywords or triggered critical automated deductions.";
   }
 
