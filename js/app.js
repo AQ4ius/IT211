@@ -21,7 +21,13 @@ function loadRandomQuestion() {
   const q = QUESTION_BANK[currentQuestionIndex];
   document.getElementById('q-category').innerText = q.category;
   document.getElementById('q-title').innerText = q.title;
-  document.getElementById('q-desc').innerText = q.desc;
+
+  let fullDesc = q.desc;
+  if (q.scenario) {
+    fullDesc += `<br><br><strong style="color: var(--primary); display: block; margin-bottom: 4px;">💼 Systems Analysis &amp; Business Task:</strong>${q.scenario}`;
+  }
+  document.getElementById('q-desc').innerHTML = fullDesc;
+
   document.getElementById('essay-text').value = "";
   updateWordCount();
 
@@ -36,8 +42,9 @@ function loadRandomQuestion() {
   document.getElementById('metric-density').innerText = "0%";
   document.getElementById('metric-penalties').innerText = "0";
   document.getElementById('scan-status').innerText = "WAITING";
-  document.getElementById('regex-log-output').innerHTML = `<span style="color: #64748b;">// Ready for question [${q.id}]. Awaiting student text...</span>`;
+  document.getElementById('regex-log-output').innerHTML = `<span style="color: #64748b;">// Ready for scenario [${q.id}]. Awaiting student text...</span>`;
   document.getElementById('detailed-feedback').innerHTML = "Write your essay on the left and submit.";
+  showToast(`Loaded: ${q.title}`, "info");
 }
 
 function updateWordCount() {
@@ -52,6 +59,7 @@ function loadExemplarAnswer() {
   const q = QUESTION_BANK[currentQuestionIndex];
   document.getElementById('essay-text').value = q.exemplar;
   updateWordCount();
+  showToast("Loaded model 30/30 Systems Analyst answer!", "info");
 }
 
 function gradeEssay() {
@@ -60,7 +68,7 @@ function gradeEssay() {
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
 
   if (words < 15) {
-    alert("Please write at least 15 words before running the audit.");
+    showToast("Please write at least 15 words before running the audit.", "warning");
     return;
   }
 

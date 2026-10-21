@@ -1,5 +1,6 @@
 /**
  * IT 211 RAM • Interactive DFD Canvas Engine & Mortal Sin Linter
+ * Enhanced with Custom UI Modal, Toast Notifications, and Precise Arrow Geometries
  */
 
 let dfdNodes = [];
@@ -8,6 +9,7 @@ let currentCanvasMode = 'move';
 let selectedNodeForConnection = null;
 let draggedNode = null;
 let dragOffset = { x: 0, y: 0 };
+let activeModalCallback = null;
 
 const SCENARIOS = {
   pos: {
@@ -24,6 +26,46 @@ const SCENARIOS = {
   }
 };
 
+/* ========================================================
+   GEOMETRY UTILS: BOUNDING BOX INTERSECTIONS & ARROWS
+   ======================================================== */
+function getNodeDims(node) {
+  if (node.type === 'process') return { w: 130, h: 55 };
+  if (node.type === 'entity') return { w: 120, h: 45 };
+  if (node.type === 'store') return { w: 130, h: 42 };
+  return { w: 120, h: 45 };
+}
+
+function getNodeCenter(node) {
+  const dims = getNodeDims(node);
+  return { x: node.x + dims.w / 2, y: node.y + dims.h / 2 };
+}
+
+function getRectIntersection(cx, cy, w, h, fromX, fromY) {
+  const dx = fromX - cx;
+  const dy = fromY - cy;
+  if (dx === 0 && dy === 0) return { x: cx, y: cy };
+
+  const halfW = w / 2;
+  const halfH = h / 2;
+  const slope = dy / dx;
+
+  let edgeX = 0;
+  let edgeY = 0;
+
+  if (Math.abs(dy) * halfW <= Math.abs(dx) * halfH) {
+    edgeX = dx > 0 ? cx + halfW : cx - halfW;
+    edgeY = cy + (edgeX - cx) * slope;
+  } else {
+    edgeY = dy > 0 ? cy + halfH : cy - halfH;
+    edgeX = cx + (edgeY - cy) / slope;
+  }
+  return { x: edgeX, y: edgeY };
+}
+
+/* ========================================================
+   CANVAS ACTIONS & PRESETS
+   ======================================================== */
 function changeScenario() {
   const val = document.getElementById('scenario-selector').value;
   document.getElementById('scenario-hint').innerText = SCENARIOS[val].hint;
@@ -38,8 +80,8 @@ function setCanvasMode(mode) {
 
   const statusMap = {
     move: "Mode: Select & Drag Elements",
-    connect: "Mode: Click Source Node, then Click Target Node to draw Data Flow",
-    delete: "Mode: Click any element to remove"
+    connect: "Mode: Click SOURCE element (Output), then click TARGET element (Input)",
+    delete: "Mode: Click any element or flow to delete"
   };
   document.getElementById('canvas-status').innerText = statusMap[mode];
   renderDfd();
@@ -62,6 +104,7 @@ function addDfdNode(type) {
   dfdNodes.push({ id, type, name, x: defaultX, y: defaultY });
   renderDfd();
   auditDfdDiagram();
+  showToast(`Added ${type.toUpperCase()}: ${name}`, 'success');
 }
 
 function clearDfdCanvas() {
@@ -70,34 +113,36 @@ function clearDfdCanvas() {
   selectedNodeForConnection = null;
   renderDfd();
   auditDfdDiagram();
+  showToast("Canvas cleared", "warning");
 }
 
 function loadBuggyDfdPreset() {
   dfdNodes = [
-    { id: "n1", type: "entity", name: "CUSTOMER", x: 60, y: 80 },
-    { id: "n2", type: "store", name: "D1 SALES_STORE", x: 380, y: 80 },
-    { id: "n3", type: "store", name: "D2 INVENTORY", x: 380, y: 220 },
-    { id: "n4", type: "process", name: "CALCULATOR", x: 180, y: 240 }, // Bad name (no verb), miracle or black hole
-    { id: "n5", type: "process", name: "3.0 LOG ERRORS", x: 60, y: 380 } // Black hole
+    { id: "n1", type: "entity", name: "CUSTOMER", x: 40, y: 80 },
+    { id: "n2", type: "store", name: "D1 SALES_STORE", x: 400, y: 80 },
+    { id: "n3", type: "store", name: "D2 INVENTORY", x: 400, y: 240 },
+    { id: "n4", type: "process", name: "CALCULATOR", x: 180, y: 240 },
+    { id: "n5", type: "process", name: "3.0 LOG ERRORS", x: 40, y: 380 }
   ];
 
   dfdConnections = [
-    { id: "c1", from: "n1", to: "n2", label: "DirectOrderData" }, // Sin #3: Entity -> Store directly!
-    { id: "c2", from: "n2", to: "n3", label: "SyncData" },        // Sin #1: Store -> Store directly!
-    { id: "c3", from: "n1", to: "n5", label: "CrashLog" }         // n5 has no output -> Black Hole!
+    { id: "c1", from: "n1", to: "n2", label: "DirectOrderData" }, // Sin #3
+    { id: "c2", from: "n2", to: "n3", label: "SyncData" },        // Sin #1
+    { id: "c3", from: "n1", to: "n5", label: "CrashLog" }         // Sin #5 (Black Hole)
   ];
 
   renderDfd();
   auditDfdDiagram();
+  showToast("Loaded preset containing multiple Mortal Sins! Check the Linter panel.", "danger");
 }
 
 function loadPerfectDfdPreset() {
   dfdNodes = [
-    { id: "n1", type: "entity", name: "CUSTOMER", x: 60, y: 120 },
-    { id: "n2", type: "process", name: "1.0 COMPUTE SALES", x: 250, y: 120 },
-    { id: "n3", type: "store", name: "D1 PRODUCTS", x: 250, y: 20 },
-    { id: "n4", type: "store", name: "D2 SALES", x: 250, y: 260 },
-    { id: "n5", type: "entity", name: "CASHIER", x: 480, y: 120 }
+    { id: "n1", type: "entity", name: "CUSTOMER", x: 40, y: 140 },
+    { id: "n2", type: "process", name: "1.0 COMPUTE SALES", x: 260, y: 140 },
+    { id: "n3", type: "store", name: "D1 PRODUCTS", x: 260, y: 20 },
+    { id: "n4", type: "store", name: "D2 SALES", x: 260, y: 280 },
+    { id: "n5", type: "entity", name: "CASHIER", x: 500, y: 140 }
   ];
 
   dfdConnections = [
@@ -109,8 +154,12 @@ function loadPerfectDfdPreset() {
 
   renderDfd();
   auditDfdDiagram();
+  showToast("Loaded textbook balanced DFD preset!", "success");
 }
 
+/* ========================================================
+   RENDER ENGINE (With Visible Directed Arrowheads)
+   ======================================================== */
 function renderDfd() {
   const connGroup = document.getElementById('svg-connections');
   const nodeGroup = document.getElementById('svg-nodes');
@@ -125,40 +174,126 @@ function renderDfd() {
     const toNode = dfdNodes.find(n => n.id === c.to);
     if (!fromNode || !toNode) return;
 
-    // Center coords
-    const fX = fromNode.x + 60;
-    const fY = fromNode.y + 25;
-    const tX = toNode.x + 60;
-    const tY = toNode.y + 25;
+    const fromCenter = getNodeCenter(fromNode);
+    const toCenter = getNodeCenter(toNode);
+    const fromDims = getNodeDims(fromNode);
+    const toDims = getNodeDims(toNode);
 
-    // Check if error flow (store to store, entity to store, entity to entity)
+    // Compute perimeter intersections
+    let startPt, endPt;
+    if (c.from === c.to) {
+      // Recursive loop
+      startPt = { x: fromNode.x + fromDims.w, y: fromNode.y + 15 };
+      endPt = { x: fromNode.x + fromDims.w, y: fromNode.y + fromDims.h - 15 };
+    } else {
+      startPt = getRectIntersection(fromCenter.x, fromCenter.y, fromDims.w, fromDims.h, toCenter.x, toCenter.y);
+      endPt = getRectIntersection(toCenter.x, toCenter.y, toDims.w, toDims.h, fromCenter.x, fromCenter.y);
+    }
+
+    // Check if error flow
     const isError = (fromNode.type === 'store' && toNode.type === 'store') ||
                     (fromNode.type === 'entity' && toNode.type === 'entity') ||
                     (fromNode.type === 'entity' && toNode.type === 'store') ||
-                    (fromNode.type === 'store' && toNode.type === 'entity');
+                    (fromNode.type === 'store' && toNode.type === 'entity') ||
+                    (c.from === c.to);
 
-    // Create line
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", fX);
-    line.setAttribute("y1", fY);
-    line.setAttribute("x2", tX);
-    line.setAttribute("y2", tY);
-    line.setAttribute("stroke", isError ? "#dc2626" : "#2563eb");
-    line.setAttribute("stroke-width", "2");
-    line.setAttribute("marker-end", isError ? "url(#dfd-arr-err)" : "url(#dfd-arr)");
+    const strokeColor = isError ? "#dc2626" : "#2563eb";
+    const markerType = isError ? "url(#dfd-arr-err)" : "url(#dfd-arr)";
 
-    // Text label
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", (fX + tX) / 2);
-    text.setAttribute("y", (fY + tY) / 2 - 6);
-    text.setAttribute("fill", isError ? "#991b1b" : "#1e3a8a");
-    text.setAttribute("font-size", "10");
-    text.setAttribute("font-weight", "bold");
-    text.setAttribute("text-anchor", "middle");
-    text.textContent = c.label;
+    const flowGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    flowGroup.setAttribute("class", "data-flow-group");
+    flowGroup.setAttribute("style", "cursor: pointer;");
 
-    connGroup.appendChild(line);
-    connGroup.appendChild(text);
+    if (c.from === c.to) {
+      // Loop path
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const arc = `M ${startPt.x} ${startPt.y} C ${startPt.x + 50} ${startPt.y - 20}, ${endPt.x + 50} ${endPt.y + 20}, ${endPt.x} ${endPt.y}`;
+      path.setAttribute("d", arc);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", strokeColor);
+      path.setAttribute("stroke-width", "2.5");
+      path.setAttribute("marker-end", markerType);
+      flowGroup.appendChild(path);
+    } else {
+      // Line
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", startPt.x);
+      line.setAttribute("y1", startPt.y);
+      line.setAttribute("x2", endPt.x);
+      line.setAttribute("y2", endPt.y);
+      line.setAttribute("stroke", strokeColor);
+      line.setAttribute("stroke-width", "2.5");
+      line.setAttribute("marker-end", markerType);
+      flowGroup.appendChild(line);
+
+      // Label background pill
+      const midX = (startPt.x + endPt.x) / 2;
+      const midY = (startPt.y + endPt.y) / 2;
+      const labelText = c.label || "Data_Flow";
+      const pillWidth = Math.max(70, labelText.length * 7 + 24);
+
+      const pillRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      pillRect.setAttribute("x", midX - pillWidth / 2);
+      pillRect.setAttribute("y", midY - 10);
+      pillRect.setAttribute("width", pillWidth);
+      pillRect.setAttribute("height", "20");
+      pillRect.setAttribute("rx", "10");
+      pillRect.setAttribute("fill", "#ffffff");
+      pillRect.setAttribute("stroke", strokeColor);
+      pillRect.setAttribute("stroke-width", "1.5");
+      pillRect.setAttribute("filter", "drop-shadow(0 1px 3px rgba(0,0,0,0.1))");
+      flowGroup.appendChild(pillRect);
+
+      // Label text with explicit directional arrow
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", midX);
+      text.setAttribute("y", midY + 3.5);
+      text.setAttribute("fill", isError ? "#991b1b" : "#1e40af");
+      text.setAttribute("font-size", "9");
+      text.setAttribute("font-weight", "800");
+      text.setAttribute("text-anchor", "middle");
+      text.textContent = `${labelText} ➔`;
+      flowGroup.appendChild(text);
+
+      // Output & Input indicator badges near endpoints
+      const outBadge = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      const outDx = (endPt.x - startPt.x) * 0.15;
+      const outDy = (endPt.y - startPt.y) * 0.15;
+      outBadge.setAttribute("x", startPt.x + outDx);
+      outBadge.setAttribute("y", startPt.y + outDy - 5);
+      outBadge.setAttribute("fill", "#64748b");
+      outBadge.setAttribute("font-size", "7.5");
+      outBadge.setAttribute("font-weight", "bold");
+      outBadge.setAttribute("text-anchor", "middle");
+      outBadge.textContent = "📤 OUT";
+      flowGroup.appendChild(outBadge);
+
+      const inBadge = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      const inDx = (startPt.x - endPt.x) * 0.15;
+      const inDy = (startPt.y - endPt.y) * 0.15;
+      inBadge.setAttribute("x", endPt.x + inDx);
+      inBadge.setAttribute("y", endPt.y + inDy - 5);
+      inBadge.setAttribute("fill", strokeColor);
+      inBadge.setAttribute("font-size", "7.5");
+      inBadge.setAttribute("font-weight", "bold");
+      inBadge.setAttribute("text-anchor", "middle");
+      inBadge.textContent = "📥 IN";
+      flowGroup.appendChild(inBadge);
+    }
+
+    flowGroup.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentCanvasMode === 'delete') {
+        dfdConnections = dfdConnections.filter(item => item.id !== c.id);
+        renderDfd();
+        auditDfdDiagram();
+        showToast("Deleted Data Flow", "warning");
+      } else {
+        showToast(`Flow [${c.label}]: Output from ${fromNode.name} ➔ Input to ${toNode.name}`, 'info');
+      }
+    });
+
+    connGroup.appendChild(flowGroup);
   });
 
   // Render Nodes
@@ -168,10 +303,12 @@ function renderDfd() {
     g.setAttribute("transform", `translate(${node.x}, ${node.y})`);
     g.setAttribute("data-id", node.id);
 
+    const dims = getNodeDims(node);
+
     if (node.type === 'process') {
       const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      rect.setAttribute("width", "125");
-      rect.setAttribute("height", "55");
+      rect.setAttribute("width", dims.w);
+      rect.setAttribute("height", dims.h);
       rect.setAttribute("rx", "8");
       rect.setAttribute("fill", "#ffffff");
       rect.setAttribute("stroke", "#1e293b");
@@ -180,13 +317,13 @@ function renderDfd() {
       const bar = document.createElementNS("http://www.w3.org/2000/svg", "line");
       bar.setAttribute("x1", "0");
       bar.setAttribute("y1", "16");
-      bar.setAttribute("x2", "125");
+      bar.setAttribute("x2", dims.w);
       bar.setAttribute("y2", "16");
       bar.setAttribute("stroke", "#1e293b");
       bar.setAttribute("stroke-width", "1.2");
 
       const textId = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      textId.setAttribute("x", "62");
+      textId.setAttribute("x", dims.w / 2);
       textId.setAttribute("y", "12");
       textId.setAttribute("fill", "#64748b");
       textId.setAttribute("font-size", "9");
@@ -195,7 +332,7 @@ function renderDfd() {
       textId.textContent = "PROCESS";
 
       const textName = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      textName.setAttribute("x", "62");
+      textName.setAttribute("x", dims.w / 2);
       textName.setAttribute("y", "36");
       textName.setAttribute("fill", "#0f172a");
       textName.setAttribute("font-size", "9");
@@ -210,15 +347,15 @@ function renderDfd() {
 
     } else if (node.type === 'entity') {
       const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      rect.setAttribute("width", "120");
-      rect.setAttribute("height", "45");
+      rect.setAttribute("width", dims.w);
+      rect.setAttribute("height", dims.h);
       rect.setAttribute("fill", "#f8fafc");
       rect.setAttribute("stroke", "#1e293b");
       rect.setAttribute("stroke-width", "1.8");
 
       const textName = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      textName.setAttribute("x", "60");
-      textName.setAttribute("y", "26");
+      textName.setAttribute("x", dims.w / 2);
+      textName.setAttribute("y", dims.h / 2 + 4);
       textName.setAttribute("fill", "#1e293b");
       textName.setAttribute("font-size", "9.5");
       textName.setAttribute("font-weight", "bold");
@@ -230,8 +367,8 @@ function renderDfd() {
 
     } else if (node.type === 'store') {
       const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      rect.setAttribute("width", "125");
-      rect.setAttribute("height", "40");
+      rect.setAttribute("width", dims.w);
+      rect.setAttribute("height", dims.h);
       rect.setAttribute("fill", "#ffffff");
       rect.setAttribute("stroke", "#1e293b");
       rect.setAttribute("stroke-width", "1.8");
@@ -240,13 +377,13 @@ function renderDfd() {
       bar.setAttribute("x1", "30");
       bar.setAttribute("y1", "0");
       bar.setAttribute("x2", "30");
-      bar.setAttribute("y2", "40");
+      bar.setAttribute("y2", dims.h);
       bar.setAttribute("stroke", "#1e293b");
       bar.setAttribute("stroke-width", "1.8");
 
       const textId = document.createElementNS("http://www.w3.org/2000/svg", "text");
       textId.setAttribute("x", "15");
-      textId.setAttribute("y", "24");
+      textId.setAttribute("y", dims.h / 2 + 4);
       textId.setAttribute("fill", "#1e293b");
       textId.setAttribute("font-size", "9");
       textId.setAttribute("font-weight", "bold");
@@ -254,8 +391,8 @@ function renderDfd() {
       textId.textContent = "D1";
 
       const textName = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      textName.setAttribute("x", "75");
-      textName.setAttribute("y", "24");
+      textName.setAttribute("x", (dims.w + 30) / 2);
+      textName.setAttribute("y", dims.h / 2 + 4);
       textName.setAttribute("fill", "#0f172a");
       textName.setAttribute("font-size", "9");
       textName.setAttribute("font-weight", "bold");
@@ -268,7 +405,6 @@ function renderDfd() {
       g.appendChild(textName);
     }
 
-    // Interaction listeners
     g.addEventListener('mousedown', (e) => onNodeMouseDown(e, node));
     g.addEventListener('click', (e) => onNodeClick(e, node));
 
@@ -276,6 +412,9 @@ function renderDfd() {
   });
 }
 
+/* ========================================================
+   MOUSE EVENTS
+   ======================================================== */
 function onNodeMouseDown(e, node) {
   if (currentCanvasMode !== 'move') return;
   draggedNode = node;
@@ -307,41 +446,117 @@ function onNodeClick(e, node) {
     dfdConnections = dfdConnections.filter(c => c.from !== node.id && c.to !== node.id);
     renderDfd();
     auditDfdDiagram();
+    showToast(`Deleted ${node.name}`, "warning");
     return;
   }
 
   if (currentCanvasMode === 'connect') {
     if (!selectedNodeForConnection) {
       selectedNodeForConnection = node.id;
-      document.getElementById('canvas-status').innerText = `Selected SOURCE [${node.name}]. Now click TARGET element...`;
+      document.getElementById('canvas-status').innerText = `SOURCE selected: [${node.name}] (Output). Now click TARGET element (Input)...`;
       renderDfd();
     } else {
-      if (selectedNodeForConnection === node.id) {
+      const fromNode = dfdNodes.find(n => n.id === selectedNodeForConnection);
+      const toNode = node;
+
+      if (fromNode.id === toNode.id) {
         // Recursive loop attempt
         dfdConnections.push({
           id: "conn_" + Date.now(),
-          from: selectedNodeForConnection,
-          to: node.id,
-          label: "RecursiveFlow"
+          from: fromNode.id,
+          to: toNode.id,
+          label: "RecursiveLoop"
         });
+        selectedNodeForConnection = null;
+        document.getElementById('canvas-status').innerText = "Data flow created. Auditing architecture...";
+        renderDfd();
+        auditDfdDiagram();
+        showToast("Created recursive loop flow (Mortal Sin #9)", "danger");
       } else {
-        const flowLabel = prompt("Enter Data Flow Name (Noun phrase, e.g. Customer_Order, Payment_Slip):", "Data_Flow");
-        dfdConnections.push({
-          id: "conn_" + Date.now(),
-          from: selectedNodeForConnection,
-          to: node.id,
-          label: flowLabel || "FlowData"
+        // Open Custom In-App Modal
+        openDataFlowModal(fromNode, toNode, (flowName) => {
+          dfdConnections.push({
+            id: "conn_" + Date.now(),
+            from: fromNode.id,
+            to: toNode.id,
+            label: flowName || "Data_Flow"
+          });
+          selectedNodeForConnection = null;
+          document.getElementById('canvas-status').innerText = `Connected: ${fromNode.name} ➔ ${toNode.name}`;
+          renderDfd();
+          auditDfdDiagram();
+          showToast(`Data Flow Created: [${flowName}]`, "success");
         });
       }
-
-      selectedNodeForConnection = null;
-      document.getElementById('canvas-status').innerText = "Data flow created. Auditing architecture...";
-      renderDfd();
-      auditDfdDiagram();
     }
   }
 }
 
+/* ========================================================
+   CUSTOM MODAL & TOAST MANAGERS (Zero browser popups)
+   ======================================================== */
+function openDataFlowModal(fromNode, toNode, callback) {
+  activeModalCallback = callback;
+  const modal = document.getElementById('app-modal');
+  const input = document.getElementById('modal-input');
+  const desc = document.getElementById('modal-desc');
+  const chipsBox = document.getElementById('modal-chips');
+
+  desc.innerHTML = `Enter the noun phrase representing data leaving <strong>[${fromNode.name}]</strong> as Output and arriving at <strong>[${toNode.name}]</strong> as Input:`;
+  input.value = "Data_Flow";
+
+  // Contextual chip suggestions
+  const suggestions = ["Item_Info", "Product_Details", "Computed_Sales", "Payment_Record", "Receipt", "Customer_Details", "Verification_Token", "Audit_Log"];
+  chipsBox.innerHTML = "";
+  suggestions.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = "chip-btn";
+    btn.type = "button";
+    btn.textContent = s;
+    btn.onclick = () => { input.value = s; };
+    chipsBox.appendChild(btn);
+  });
+
+  modal.classList.add('active');
+  input.focus();
+  input.select();
+
+  // Setup confirm button handler
+  const confirmBtn = document.getElementById('modal-confirm-btn');
+  confirmBtn.onclick = () => {
+    const val = input.value.trim() || "Data_Flow";
+    closeAppModal();
+    if (activeModalCallback) activeModalCallback(val);
+  };
+}
+
+function closeAppModal() {
+  const modal = document.getElementById('app-modal');
+  if (modal) modal.classList.remove('active');
+  selectedNodeForConnection = null;
+  renderDfd();
+}
+
+function showToast(message, type = "info") {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `<span>${type === 'success' ? '✔️' : type === 'danger' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</span> ${message}`;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(12px)';
+    setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+  }, 3500);
+}
+
+/* ========================================================
+   DFD ARCHITECTURE LINTER
+   ======================================================== */
 function auditDfdDiagram() {
   const sinList = document.getElementById('sin-flag-list');
   if (!sinList) return;
@@ -419,8 +634,7 @@ function auditDfdDiagram() {
       });
     }
 
-    // Process naming check: must start with verb or number + verb
-    const verbRegex = /\b(compute|process|calculate|generate|update|record|verify|produce|validate|admit|check)\b/i;
+    const verbRegex = /\b(compute|process|calculate|generate|update|record|verify|produce|validate|admit|check|evaluate|enroll|enrol)\b/i;
     if (!verbRegex.test(proc.name)) {
       sinsFound.push({
         title: "Syntax Warning: Process Naming Convention",

@@ -1,133 +1,140 @@
 /**
- * IT 211 RAM • Exam Question Bank & Regex Grading Matchers
- * Extracted directly from Saint Louis University CS131 / IT211 RAM Modules 3 & 4
+ * IT 211 RAM • Situational Real-Life Scenario Question Bank
+ * Deep business, systems analysis, and requirements engineering cases.
  */
 
 const QUESTION_BANK = [
   {
-    id: "q1",
-    category: "MODULE 3: DFD FUNDAMENTALS",
-    title: "Explain the Principle of Balancing in DFDs and why it enforces Conservation of Data.",
-    desc: "Discuss parent and child DFDs, how flows must be preserved across functional decomposition, and what constitutes an unbalanced diagram.",
+    id: "q_hosp",
+    category: "MODULE 3: BUSINESS PROBLEM & REQUIREMENTS",
+    title: "Scenario 1: Hospital ER Admission & Data Privacy Compliance",
+    desc: "St. Jude Hospital ER manual triage takes 55 minutes. Patient records in triage do not match billing, causing medical and billing discrepancies. DOH/PhilHealth mandates real-time bed tracking and DPA/HIPAA requires patient record encryption at rest.",
+    scenario: "Analyze this business problem: 1. Identify the core problem areas in the As-Is system. 2. Formulate 2 Functional Requirements and 2 Non-Functional Requirements (specifying latency & compliance). 3. Explain why stating 'Patient has active HMO insurance' is an Assumption and NOT an internal Use Case Precondition.",
     requiredKeywords: [
-      { term: "balancing", weight: 3, regex: /\bbalanc(ed|ing)\b/i },
-      { term: "parent (dfd|process)", weight: 3, regex: /\bparent\b/i },
-      { term: "child (dfd|process|decomposition)", weight: 3, regex: /\bchild\b/i },
-      { term: "input and output (flows)", weight: 4, regex: /\b(input|inputs)\b.*\b(output|outputs)\b/i },
-      { term: "maintained / preserved", weight: 3, regex: /\b(maintain(ed)?|preserv(ed)?)\b/i },
-      { term: "conservation of data", weight: 4, regex: /\bconservation of data\b/i },
-      { term: "functional decomposition / explosion", weight: 3, regex: /\b(functional decomposition|explosion|leveling)\b/i },
-      { term: "syntax error", weight: 3, regex: /\bsyntax error(s)?\b/i },
-      { term: "accounted for", weight: 2, regex: /\baccounted for\b/i },
-      { term: "case tool", weight: 2, regex: /\bcase tool(s)?\b/i }
-    ],
-    traps: [
-      { term: "timing / sequence / loops", penalty: 5, regex: /\b(loop(s)?|timing|chronological|step 1 then step 2)\b/i, reason: "DFDs do NOT depict timing, sequencing, or loops." }
-    ],
-    exemplar: "Balancing is the fundamental architectural principle in functional decomposition ensuring that all input and output data flows entering or exiting a higher-level parent DFD bubble are strictly maintained and preserved in its decomposed child DFD. Under conservation of data, data can neither be created nor destroyed; the source of each data element must be accounted for across every level. If a parent process has two incoming flows and one outgoing flow, its child decomposition must account for those exact external flows. Failing to maintain this consistency produces an unbalanced DFD, which is a severe syntax error flagged during automated CASE tool compilation and structured walkthroughs."
-  },
-  {
-    id: "q2",
-    category: "MODULE 4: UML USE CASES",
-    title: "State the Golden Precondition Rule in Use Case Specifications. Why is 'Student passed admission' invalid?",
-    desc: "Distinguish between internal system states vs. external real-world assumptions. Contrast the student enrollment scenario.",
-    requiredKeywords: [
-      { term: "precondition(s)", weight: 3, regex: /\bprecondition(s)?\b/i },
-      { term: "internal system state", weight: 4, regex: /\b(internal|system state(s)?)\b/i },
-      { term: "set in the system (not outside)", weight: 4, regex: /\b(in the system|inside the system)\b/i },
-      { term: "system boundary", weight: 3, regex: /\bsystem boundary\b/i },
-      { term: "assumption(s) / remarks", weight: 4, regex: /\bassumption(s)?\b/i },
-      { term: "outside the system", weight: 3, regex: /\boutside\b/i },
-      { term: "enrolment vs admission", weight: 3, regex: /\b(admission|enrol(l)?ment)\b/i },
-      { term: "logged in / session", weight: 3, regex: /\b(log(ged)? in|session|credentials)\b/i },
+      { term: "problem area(s) / data inconsistency", weight: 3, regex: /\b(problem area(s)?|inconsistent|discrepanc(y|ies)|redundanc(y|ies))\b/i },
+      { term: "as-is vs to-be", weight: 3, regex: /\b(as-is|to-be)\b/i },
+      { term: "functional requirements (services)", weight: 3, regex: /\bfunctional requirement(s)?\b/i },
+      { term: "non-functional requirements (quality)", weight: 3, regex: /\bnon(-|\s)?functional requirement(s)?\b/i },
+      { term: "performance / latency (NFR)", weight: 3, regex: /\b(performance|latency|seconds|minutes|real-time)\b/i },
+      { term: "doh / philhealth / dpa / hipaa compliance", weight: 3, regex: /\b(doh|philhealth|dpa|hipaa|compliance|privacy|encryption)\b/i },
+      { term: "precondition vs assumption", weight: 4, regex: /\b(precondition|assumption)\b/i },
+      { term: "internal system state", weight: 4, regex: /\b(internal|inside the system|system state)\b/i },
+      { term: "outside system boundary", weight: 3, regex: /\boutside\b/i },
       { term: "verifiable in software", weight: 3, regex: /\bverifi(able|ed)\b/i }
     ],
     traps: [
-      { term: "calling admission a precondition", penalty: 8, regex: /\badmission is a precondition\b/i, reason: "Admission occurs outside the enrollment system boundary, making it an assumption, NOT a precondition!" }
+      { term: "treating insurance policy as a precondition", penalty: 7, regex: /\bhmo insurance is a valid precondition\b/i, reason: "Patient's real-world insurance possession is outside the enrollment/admission boundary; it is an Assumption, not a software Precondition!" }
     ],
-    exemplar: "The Golden Precondition Rule mandates that preconditions must represent system states that are expected to be true when the use case begins and must have been set in the system, not outside of it. A valid precondition is verifiable by the software itself, such as 'the student is successfully logged into the system' with active session credentials. Conversely, stating that a 'student passed admission' or 'graduated high school' is strictly invalid as a precondition because admission takes place outside the enrollment software system boundary. External real-world qualifications belong under Assumptions or Remarks, because the enrollment system cannot directly verify external human actions without an internal record already existing."
+    exemplar: "1. Problem Areas (As-Is): Severe data inconsistency between triage and billing due to redundant paper ledgers, causing operational latency and delayed patient care. 2. Functional Requirements (To-Be): FR-1: System shall record triage vital signs and automatically allocate available ER beds. FR-2: System shall submit online claims verification to PhilHealth and partner HMO gateways. 3. Non-Functional Requirements: NFR-1 (Performance): Emergency bed assignment shall update in < 2 seconds. NFR-2 (Compliance/Security): All patient health data must comply with DPA and DOH standards using AES-256 encryption at rest. 4. Precondition Analysis: 'Patient has active HMO insurance' is strictly an Assumption, NOT an internal Precondition. Preconditions must be internal system states verifiable inside the software boundary (e.g. 'Patient medical record exists in database'). External real-world qualifications belong under Assumptions or Remarks."
   },
   {
-    id: "q3",
-    category: "TOPIC 6: DFD QUALITY & MORTAL SINS",
-    title: "Differentiate between a Miracle, a Black Hole, and a Gray Hole in Data Flow Diagrams.",
-    desc: "Provide the exact input/output conditions for each anomaly and cite how they violate data conservation.",
+    id: "q_fintech",
+    category: "MODULE 3 & TOPIC 6: FINTECH & DFD BOUNDARIES",
+    title: "Scenario 2: FinTech Mobile Wallet & Central Bank (BSP) Anti-Fraud Flow",
+    desc: "QuickPay e-wallet launches peer-to-peer transfers. BSP Circular mandates real-time anti-fraud transaction monitoring for amounts exceeding ₱50,000, multi-factor authentication, and encrypted audit trail retention.",
+    scenario: "1. Using DFD principles, explain how fund transfers move through processes to data stores. 2. Differentiate features inherent to automation from explicit stakeholder requests. 3. Explain why an automated transaction monitoring process cannot directly write into the Central Bank ledger without violating DFD encapsulation (Mortal Sin #3).",
     requiredKeywords: [
-      { term: "miracle / spontaneous generation", weight: 4, regex: /\b(miracle|spontaneous generation)\b/i },
-      { term: "zero inputs / no incoming flow", weight: 3, regex: /\b(no in(put)?|zero input(s)?|without input)\b/i },
-      { term: "black hole", weight: 4, regex: /\bblack hole\b/i },
-      { term: "zero outputs / no outgoing flow", weight: 3, regex: /\b(no out(put)?|zero output(s)?|without output)\b/i },
-      { term: "gray hole", weight: 4, regex: /\bgray hole\b/i },
+      { term: "data moves / transformation", weight: 3, regex: /\b(data moves|transformed|data flow)\b/i },
+      { term: "features inherent to automation", weight: 4, regex: /\bfeatures (that )?inherently (arise|arising) from automation\b/i },
+      { term: "explicitly stated requirements", weight: 3, regex: /\bexplicitly stated\b/i },
+      { term: "authentication / timeout / audit trail", weight: 3, regex: /\b(authentication|token|audit trail|timeout|session)\b/i },
+      { term: "bsp / regulatory supervisory body", weight: 3, regex: /\b(bsp|bangko sentral|regulat(ory|ion))\b/i },
+      { term: "mortal sin #3 / entity to data store", weight: 4, regex: /\b(mortal sin (#)?3|entity to data store|direct connection)\b/i },
+      { term: "encapsulation / boundary", weight: 4, regex: /\b(encapsulat(ion|ed)|system boundary)\b/i },
+      { term: "action verb-object pair", weight: 3, regex: /\baction verb-object\b/i },
+      { term: "mediated by process", weight: 3, regex: /\bmediated by (a )?process\b/i }
+    ],
+    traps: [
+      { term: "direct entity to store bypass", penalty: 7, regex: /\bexternal entity can directly write to data store\b/i, reason: "Direct Entity to Data Store connections violate encapsulation and are Mortal Sin #3!" }
+    ],
+    exemplar: "1. DFD Flow: In the To-Be system, Sender Entity inputs Transfer_Request to Process 1.0 'Execute Transfer', which validates balances against D1 ACCOUNTS and writes to D2 TRANSACTIONS. 2. Requirements Distinction: Explicit Stakeholder Requirements represent user-requested goals (e.g. 'Customer wants to send ₱5,000 to a phone number'). Conversely, Features Inherent to Automation are architectural necessities that arise purely from digitization—such as biometric multi-factor authentication, automated session expiration, and encrypted audit logging to comply with BSP anti-fraud regulations. 3. Mortal Sin Analysis: The automated transaction monitoring system cannot allow an external banking entity or user to directly access or write to an internal data store (Mortal Sin #3). Direct entity-to-store access bypasses software validation, fraud inspection, and encryption, fatally violating data encapsulation. All interactions must be mediated by a process bubble with an action verb-object pair."
+  },
+  {
+    id: "q_sched",
+    category: "MODULE 4 & TOPIC 6: BPR & USE CASE ABSTRACTION",
+    title: "Scenario 3: University Enrollment & Prerequisite Bypass (BPR)",
+    desc: "A university discovered that students shifted majors and enrolled in Senior Systems Analysis without passing prerequisite Database Systems. Registrar clerks checked paper prerequisite forms manually, which were often misplaced or forged.",
+    scenario: "1. Apply Root Cause Analysis and Activity Elimination (BPR) to conceptualize the To-Be process. 2. Write a Structured English specification for Process 2.1 'Validate Academic Prerequisites'. 3. Explain why putting 'Clerk clicks blue submit button on modal screen' in an analysis Use Case violates abstraction.",
+    requiredKeywords: [
+      { term: "root cause analysis", weight: 4, regex: /\broot cause analysis\b/i },
+      { term: "activity elimination / bpr", weight: 4, regex: /\bactivity elimination\b/i },
+      { term: "structured english", weight: 3, regex: /\bstructured english\b/i },
+      { term: "if-then-else logic", weight: 3, regex: /\bif.*then.*else\b/i },
+      { term: "prerequisite validation", weight: 3, regex: /\bprerequisite(s)?\b/i },
+      { term: "user interface details omitted", weight: 4, regex: /\b(user interface details|ui details|do not incorporate)\b/i },
+      { term: "requirements analysis vs design phase", weight: 4, regex: /\b(requirements analysis|design phase)\b/i },
+      { term: "what vs how", weight: 3, regex: /\bwhat.*how\b/i },
+      { term: "premature coupling", weight: 2, regex: /\b(coupling|premature|implementation)\b/i }
+    ],
+    traps: [
+      { term: "putting ui buttons in use case", penalty: 6, regex: /\bui buttons should be included in use case\b/i, reason: "UI details are strictly banned during requirements analysis!" }
+    ],
+    exemplar: "1. Analysis: Root Cause Analysis reveals that prerequisite bypass occurred because manual paper checking lacked centralized validation. Through Activity Elimination, the manual paper clerk sign-off is eliminated and replaced with an automated query against D1 ACADEMIC_RECORDS. 2. Structured English for Process 2.1 'Validate Academic Prerequisites':\nIF Student_Prerequisite_Grade >= 75 THEN\n  GENERATE Eligibility_Approval_Token\n  UPDATE D2 ENROLLMENT_STATE WITH 'Prerequisite Cleared'\nELSE\n  REJECT Enrollment_Request WITH 'Prerequisite Failed: Database Systems Required'\n  TERMINATE Transaction\nENDIF\n3. Use Case UI Ban: Specifying that 'Clerk clicks blue submit button on modal screen' violates requirements analysis abstraction. Use cases define WHAT business service is delivered, not HOW the interface widgets appear. Dictating screen buttons creates premature technical coupling; UI specifications belong exclusively in the Design Phase."
+  },
+  {
+    id: "q_pos",
+    category: "TOPIC 6: DATA DICTIONARY & GRAY HOLE SINS",
+    title: "Scenario 4: Dining Chain Cloud POS & Senior Citizen Discount Auditing",
+    desc: "A national restaurant chain was audited by tax authorities because 20% Senior Citizen and PWD discounts were applied inconsistently without logging required government OSCA IDs, causing audit penalties.",
+    scenario: "1. Define the formal Data Dictionary EBNF algebraic notation for DISCOUNTED_ORDER. 2. Explain how a Gray Hole Process occurs if the POS computes discounted totals without receiving verification data. 3. Detail the Use Case Extensions for handling invalid senior citizen ID credentials.",
+    requiredKeywords: [
+      { term: "data dictionary / ebnf notation", weight: 4, regex: /\bdata dictionary\b/i },
+      { term: "= + [ | ] { } ( ) operators", weight: 4, regex: /\b(=|\+|\bcomposed of\b|\[.*\|.*\]|\{.*\})\b/i },
+      { term: "data element vs record", weight: 3, regex: /\b(data element|record|data structure)\b/i },
+      { term: "gray hole phenomenon", weight: 4, regex: /\bgray hole\b/i },
       { term: "inputs are insufficient", weight: 4, regex: /\b(insufficient|not enough input(s)?)\b/i },
       { term: "generate output", weight: 3, regex: /\bgenerate output\b/i },
+      { term: "extensions (3a, 3b)", weight: 3, regex: /\bextension(s)?\b/i },
+      { term: "continue or terminate", weight: 3, regex: /\b(continue|terminate(d)?)\b/i },
+      { term: "detected by the system", weight: 2, regex: /\bdetected by the system\b/i }
+    ],
+    traps: [
+      { term: "confusing gray hole with black hole", penalty: 5, regex: /\bgray hole has no outputs\b/i, reason: "A Gray Hole has outputs, but its inputs are insufficient to produce them!" }
+    ],
+    exemplar: "1. Data Dictionary EBNF Specification:\nOSCA_ID = 10{Numeric}\nDiscount_Type = [ Senior_Citizen | PWD | Regular ]\nOrder_Item = Item_ID + Item_Quantity + Item_Price\nDISCOUNTED_ORDER = Order_ID + { Order_Item } + Discount_Type + ( OSCA_ID ) + Subtotal + Discount_Amount + Final_Total\n2. Gray Hole Analysis: A Gray Hole occurs when Process 'Calculate Discounted Total' attempts to produce an audited tax receipt with 20% deduction, but only receives Item_Total without receiving the mandatory OSCA_ID input flow. The input is logically insufficient to generate the claimed output. 3. Use Case Extension Specification:\n3a. Customer claims senior citizen discount:\n  1. Cashier enters OSCA ID number.\n  2. System validates ID format.\n  3. If invalid, System prompts error; Use case resumes at Step 2 or terminates with standard pricing."
+  },
+  {
+    id: "q_gov",
+    category: "TOPIC 6: DFD SINS & ARCHITECTURAL BALANCING",
+    title: "Scenario 5: Municipal Licensing Bureaucracy & Database Sync",
+    desc: "A city business licensing portal requires business owners to visit 3 departments (Permits, Fire, Health). An intern analyst proposes connecting the Fire Department database directly to the Business Permit database to sync addresses automatically.",
+    scenario: "1. Identify the DFD Mortal Sin in the intern's direct database connection proposal and explain why it fails in real systems. 2. Provide the professional architectural correction. 3. Explain the Law of Balancing between the Context Diagram (Process 0) and Level 1 DFD.",
+    requiredKeywords: [
+      { term: "mortal sin #1 / store to store", weight: 4, regex: /\b(mortal sin (#)?1|store(-|\s)to(-|\s)store|data store to data store)\b/i },
+      { term: "data at rest is passive", weight: 3, regex: /\b(passive|data at rest)\b/i },
+      { term: "intermediary process required", weight: 4, regex: /\b(intermediary process|sync process|process)\b/i },
+      { term: "context diagram (process 0)", weight: 3, regex: /\bcontext diagram\b/i },
+      { term: "no data stores in context", weight: 4, regex: /\bno data store(s)?\b/i },
+      { term: "level 1 / top-level dfd", weight: 3, regex: /\blevel 1\b/i },
+      { term: "balancing principle", weight: 3, regex: /\bbalanc(ed|ing)\b/i },
       { term: "conservation of data", weight: 3, regex: /\bconservation of data\b/i },
-      { term: "syntax / semantic error", weight: 2, regex: /\b(syntax|semantic(s)?)\b/i }
+      { term: "parent to child preservation", weight: 3, regex: /\b(parent|child|preserved|maintained)\b/i }
     ],
     traps: [
-      { term: "confusing black hole with data store", penalty: 5, regex: /\bblack hole is a data store\b/i, reason: "A Black Hole is a process error where data enters but never exits." }
+      { term: "permitting store to store flow", penalty: 7, regex: /\bdata stores can directly communicate\b/i, reason: "Data stores can NEVER connect directly to other data stores!" }
     ],
-    exemplar: "In Data Flow Diagramming, three pathological process errors violate data consistency: 1. A Miracle (Spontaneous Generation) occurs when a process produces output data flows despite having no incoming data flows, violating conservation of data by creating information out of nothing. 2. A Black Hole occurs when a process absorbs input data flows but produces no outgoing data flows, causing data to permanently vanish from the system without generating value. 3. A Gray Hole occurs when a process has both inputs and outputs, but the incoming data flows are logically insufficient to generate the claimed output (e.g. inputting only Raw_Scores and attempting to produce a Complete_Transcript_With_Honors without querying student history)."
+    exemplar: "1. Mortal Sin Analysis: The intern's proposal represents Mortal Sin #1: Data Store to Data Store direct connection. Data at rest is passive; database storage files cannot autonomously execute replication or validate network packets without an active CPU process. 2. Architectural Correction: An intermediary software process must be introduced: D1 PERMIT_DATA ➔ [Process 3.0 Synchronize Agency Records] ➔ D2 FIRE_CLEARANCES. 3. Balancing Principle: In the Context Diagram, the entire system is represented as Process 0 with NO data stores permitted (internal storage is encapsulated inside the boundary). When Process 0 is exploded into the Level 1 DFD, all boundary input and output flows from the external entities must be strictly maintained and accounted for under Conservation of Data. Internal flows between processes and data stores appear only on Level 1 and below."
   },
   {
-    id: "q4",
-    category: "MODULE 4: UML USE CASES",
-    title: "Compare <<includes>> vs <<extends>> vs Generalization in Use Case Diagrams. Explain arrow directions.",
-    desc: "Define mandatory subroutines, conditional interruptions, and superclass/subclass inheritance with arrow orientations.",
+    id: "q_atm",
+    category: "MODULE 4: UML USE CASE SEMANTICS",
+    title: "Scenario 6: Banking ATM Semantics (Includes vs Extends Nuances)",
+    desc: "A software architect models an Automated Teller Machine (ATM) session. Classic textbooks claim that '<<includes>> is always required while <<extends>> is optional'. However, in an ATM session, a client chooses one or more transactions from Withdraw, Deposit, or Inquire Balance.",
+    scenario: "1. Resolve the 'Includes Required vs Extends Optional' dilemma as highlighted in course slides 38–39. 2. Contrast modeling the ATM transactions via <<includes>> vs Generalization/Specialization. 3. Detail the role of a Global Asterisk (*) Extension during an active transaction.",
     requiredKeywords: [
-      { term: "<<includes>>", weight: 3, regex: /\binclude(s)?\b/i },
-      { term: "base to included (arrow)", weight: 3, regex: /\b(base to included|from base to)\b/i },
-      { term: "mandatory / common reuse", weight: 3, regex: /\b(mandatory|reus(e|ed)|explicitly)\b/i },
-      { term: "<<extends>>", weight: 3, regex: /\bextend(s)?\b/i },
-      { term: "extending to base (arrow)", weight: 3, regex: /\b(extending to base|from extending)\b/i },
-      { term: "conditional / optional interruption", weight: 3, regex: /\b(condition(al)?|optional|interrupt(s)?)\b/i },
+      { term: "includes required vs extends optional", weight: 3, regex: /\bincludes.*extends\b/i },
+      { term: "generally true but not absolute", weight: 4, regex: /\b(not absolute|generally true)\b/i },
+      { term: "atm transaction example", weight: 3, regex: /\batm\b/i },
+      { term: "client does one or more", weight: 3, regex: /\bone or more\b/i },
+      { term: "matter of semantics / relaxed", weight: 4, regex: /\b(semantics|relaxed)\b/i },
       { term: "generalization / specialization", weight: 3, regex: /\b(generalization|specialization)\b/i },
-      { term: "superclass - subclass", weight: 3, regex: /\b(superclass|subclass|inherit(s)?)\b/i },
-      { term: "hollow triangle arrow", weight: 3, regex: /\b(triangle|hollow)\b/i },
-      { term: "dashed arrow", weight: 3, regex: /\bdashed\b/i }
+      { term: "superclass - subclass", weight: 3, regex: /\b(superclass|subclass)\b/i },
+      { term: "global asterisk (*) extension", weight: 4, regex: /\b(\*|asterisk|global extension)\b/i },
+      { term: "triggered at any point (help / call)", weight: 3, regex: /\b(any point|help|cancel)\b/i }
     ],
     traps: [
-      { term: "pointing extends towards extension", penalty: 6, regex: /\bextends points from base to extending\b/i, reason: "Wrong arrow direction! In UML, <<extends>> points FROM Extending TO Base!" }
+      { term: "stating includes is 100% absolute in all systems", penalty: 5, regex: /\bincludes is always 100% mandatory without exception\b/i, reason: "Course slides 38-39 explicitly emphasize that includes being required is generally true but NOT absolute!" }
     ],
-    exemplar: "In UML Use Case modeling: 1. <<includes>> represents a mandatory relationship where the base use case explicitly incorporates the behavior of another use case for common reuse; the dashed arrow points FROM Base TO Included (Base ──> Included). 2. <<extends>> represents an optional, conditional interruption where the extending use case inserts behavior into the base use case at a specific extension point; the dashed arrow points strictly FROM Extending TO Base (Extending ──> Base). 3. Generalization / Specialization represents inheritance analogous to the superclass-subclass relationship in object-oriented programming, where a specialized child inherits all parent behaviors; it is depicted with a solid line and a hollow triangle arrow pointing to the parent use case."
-  },
-  {
-    id: "q5",
-    category: "MODULE 3: REQUIREMENTS ENGINEERING",
-    title: "Differentiate Functional from Non-Functional Requirements. Give concrete examples from the lecture slides.",
-    desc: "Explain the definition of each, how they are tested, and cite slide examples (e.g. senior citizen discount, dashboard statistics).",
-    requiredKeywords: [
-      { term: "functional requirements", weight: 3, regex: /\bfunctional requirement(s)?\b/i },
-      { term: "services / functions", weight: 3, regex: /\b(service(s)?|function(s)?)\b/i },
-      { term: "computations / business rules", weight: 3, regex: /\b(computation(s)?|business rule(s)?)\b/i },
-      { term: "non-functional requirements", weight: 3, regex: /\bnon(-|\s)?functional\b/i },
-      { term: "quality characteristics / constraints", weight: 4, regex: /\b(quality|constraint(s)?)\b/i },
-      { term: "performance / usability / reliability", weight: 4, regex: /\b(performance|usability|reliability|safety)\b/i },
-      { term: "discount / sales / gpa (FR example)", weight: 3, regex: /\b(discount|gpa|sales|tax|payroll)\b/i },
-      { term: "24 hours / themes / response time (NFR example)", weight: 3, regex: /\b(24 hours|theme(s)?|speed|uptime)\b/i }
-    ],
-    traps: [
-      { term: "calling performance a functional requirement", penalty: 5, regex: /\bperformance is a functional requirement\b/i, reason: "Performance is a Non-Functional Requirement (quality attribute)!" }
-    ],
-    exemplar: "Functional Requirements define the specific functions, services, computations, and business rules provided by the software system. For example, the lecture slides cite that the system must compute student GPA, allow cashiers to scan barcodes, and accommodate 20% senior citizen discounts. In contrast, Non-Functional Requirements specify quality characteristics and systemic constraints that dictate how the system must perform. Examples from the slides include usability (users customizing backgrounds from theme choices), performance (dashboard statistics updating every 24 hours), security, and compliance with regulatory bodies like CHED and BSP."
-  },
-  {
-    id: "q6",
-    category: "TOPIC 6: DFD QUALITY & LINTER",
-    title: "Why can CASE tools detect Syntax Errors but CANNOT detect Semantics Errors? How are semantics errors caught?",
-    desc: "Explain grammatical rule checking vs understanding business domain logic, and cite the role of walkthroughs.",
-    requiredKeywords: [
-      { term: "syntax errors", weight: 3, regex: /\bsyntax error(s)?\b/i },
-      { term: "grammatical rules of dfd", weight: 3, regex: /\bgrammatical\b/i },
-      { term: "case tools have syntax checkers", weight: 4, regex: /\bcase tool(s)?\b/i },
-      { term: "semantics errors", weight: 3, regex: /\bsemantic(s)? error(s)?\b/i },
-      { term: "misunderstandings by the analyst", weight: 4, regex: /\bmisunderstanding(s)?\b/i },
-      { term: "collecting / analyzing / reporting", weight: 3, regex: /\b(collecting|analyzing|reporting)\b/i },
-      { term: "walk-through(s)", weight: 4, regex: /\bwalk(-|\s)?through(s)?\b/i },
-      { term: "user validation", weight: 3, regex: /\buser validation\b/i }
-    ],
-    traps: [
-      { term: "claiming case tools find all errors", penalty: 6, regex: /\bcase tools can detect semantics errors\b/i, reason: "CASE tools cannot detect semantics errors because they lack business domain knowledge." }
-    ],
-    exemplar: "Syntax errors are grammatical violations that break the formal rules of the DFD language (such as connecting an entity directly to a data store, creating black holes, or drawing bidirectional arrows). Because these rules are programmatic, automated CASE tools have built-in syntax checkers that easily detect and flag them. In contrast, Semantics Errors are misunderstandings by the analyst in collecting, analyzing, and reporting information about the system. A DFD can be 100% syntactically valid yet semantically completely wrong (such as calculating payroll using incorrect tax formulas or omitting required audit approvals). CASE tools cannot understand business context; therefore, semantics errors must be validated through structured walk-throughs and user validation."
+    exemplar: "1. Semantic Dilemma (Slides 38–39): The textbook maxim that '<<includes>> is mandatory and <<extends>> is optional' is generally true but is NOT absolute. In an ATM session, modeling Process ATM Transaction as <<includes>> Withdraw Cash, Deposit, and Inquire Balance does not mean the user must execute all three; the client selects one or more transactions. In enterprise analysis, these rules can be relaxed as a matter of semantics. 2. Alternative Modeling: Many architects model ATM transactions using Generalization / Specialization, where Withdraw Cash and Deposit to Account inherit as specialized child use cases from the generic parent use case 'ATM Transaction' (superclass-subclass relationship). 3. Global Asterisk (*) Extension: Denoted by an asterisk (*), this represents an alternate or exception path that can be triggered at ANY point during the session (e.g. '*a. Client presses Cancel button' or '*b. System detects card reader hardware tamper'), instantly terminating the session safely."
   }
 ];

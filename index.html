@@ -209,11 +209,11 @@
         <!-- SVG Interactive Surface -->
         <svg id="dfd-svg" class="canvas-svg-board">
           <defs>
-            <marker id="dfd-arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-              <polygon points="0 0, 8 4, 0 8" fill="#2563eb" />
+            <marker id="dfd-arr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+              <path d="M 0 1 L 9 5 L 0 9 z" fill="#2563eb" />
             </marker>
-            <marker id="dfd-arr-err" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-              <polygon points="0 0, 8 4, 0 8" fill="#dc2626" />
+            <marker id="dfd-arr-err" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+              <path d="M 0 1 L 9 5 L 0 9 z" fill="#dc2626" />
             </marker>
           </defs>
 
@@ -221,6 +221,12 @@
           <g id="svg-connections"></g>
           <g id="svg-nodes"></g>
         </svg>
+
+        <div class="flow-legend">
+          <span><div class="dot-blue"></div> Valid Flow: <strong>Output ➔ Input</strong></span>
+          <span><div class="dot-red"></div> Mortal Sin Flow</span>
+          <span style="margin-left: auto;">💡 <em>Arrowheads indicate data consumed as Input by the pointed element</em></span>
+        </div>
       </div>
 
       <!-- Right: Real-time Mortal Sin Auditor -->
@@ -347,6 +353,29 @@
   </section>
 
 </main>
+
+<!-- CUSTOM IN-APP MODAL (Zero browser popups) -->
+<div id="app-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-title"><span>🔗</span> Create Data Flow</h3>
+      <button class="modal-close-btn" onclick="closeAppModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="modal-desc">Enter the noun phrase representing the data packet moving from source to target:</p>
+      <input type="text" id="modal-input" class="modal-input" placeholder="e.g. Item_Info, Payment_Slip, Order_Details">
+      <div class="modal-chips-label">Quick Suggestions (Standard Nouns):</div>
+      <div class="modal-chips" id="modal-chips"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeAppModal()">Cancel</button>
+        <button class="btn btn-primary" id="modal-confirm-btn">Confirm Flow</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION CONTAINER -->
+<div id="toast-container" class="toast-container"></div>
 
 <!-- SCRIPTS -->
 <script src="js/questions.js"></script>
