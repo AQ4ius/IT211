@@ -37,12 +37,6 @@
         <span>🔍</span> Essay Forensics
       </button>
     </nav>
-
-    <div class="header-actions">
-      <div class="stats-pill">
-        <span>🎯 Mode:</span> <strong>Petty Professor Strict</strong>
-      </div>
-    </div>
   </div>
 </header>
 
@@ -201,6 +195,7 @@
           <div class="canvas-mode-group">
             <button class="canvas-mode-btn active" id="btn-mode-move" onclick="setCanvasMode('move')">✋ Move / Select</button>
             <button class="canvas-mode-btn" id="btn-mode-connect" onclick="setCanvasMode('connect')">🔗 Connect Flow (Arrow)</button>
+            <button class="canvas-mode-btn" id="btn-mode-edit" onclick="setCanvasMode('edit')">✏️ Edit / Rename</button>
             <button class="canvas-mode-btn" id="btn-mode-delete" onclick="setCanvasMode('delete')">❌ Delete Element</button>
           </div>
           <span style="font-size: 0.75rem; font-weight: 700; color: var(--slate);" id="canvas-status">Mode: Select &amp; Drag</span>
@@ -359,16 +354,25 @@
   <div class="modal-box">
     <div class="modal-header">
       <h3 id="modal-title"><span>🔗</span> Create Data Flow</h3>
-      <button class="modal-close-btn" onclick="closeAppModal()">&times;</button>
+      <button class="modal-close-btn" onclick="closeAppModal()" aria-label="Close modal">&times;</button>
     </div>
     <div class="modal-body">
-      <p id="modal-desc">Enter the noun phrase representing the data packet moving from source to target:</p>
+      <label class="modal-field-label" id="modal-name-label">Element Name / Label:</label>
       <input type="text" id="modal-input" class="modal-input" placeholder="e.g. Item_Info, Payment_Slip, Order_Details">
-      <div class="modal-chips-label">Quick Suggestions (Standard Nouns):</div>
+      
+      <div class="modal-chips-label" id="modal-chips-header">Quick Suggestions:</div>
       <div class="modal-chips" id="modal-chips"></div>
+
+      <div id="modal-desc-group" style="margin-top: 12px; margin-bottom: 12px;">
+        <label class="modal-field-label" id="modal-desc-field-label">Description / Internal Logic (Optional):</label>
+        <textarea id="modal-desc-input" class="modal-input" rows="2" style="resize: vertical; min-height: 52px; font-size: 0.82rem; font-family: inherit;" placeholder="e.g. Business logic, data fields, or role purpose..."></textarea>
+      </div>
+
+      <p id="modal-desc" class="modal-help-text"></p>
+
       <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeAppModal()">Cancel</button>
-        <button class="btn btn-primary" id="modal-confirm-btn">Confirm Flow</button>
+        <button class="btn btn-outline" type="button" onclick="closeAppModal()">Cancel</button>
+        <button class="btn btn-primary" type="button" id="modal-confirm-btn">Save Changes</button>
       </div>
     </div>
   </div>

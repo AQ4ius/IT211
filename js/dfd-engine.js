@@ -75,33 +75,42 @@ function changeScenario() {
 function setCanvasMode(mode) {
   currentCanvasMode = mode;
   document.querySelectorAll('.canvas-mode-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`btn-mode-${mode}`).classList.add('active');
+  const btn = document.getElementById(`btn-mode-${mode}`);
+  if (btn) btn.classList.add('active');
   selectedNodeForConnection = null;
 
+  const svg = document.getElementById('dfd-svg');
+  if (svg) svg.setAttribute('data-mode', mode);
+
   const statusMap = {
-    move: "Mode: Select & Drag Elements",
+    move: "Mode: Select & Drag Elements (💡 Tip: Double-click any element or flow to rename/edit)",
     connect: "Mode: Click SOURCE element (Output), then click TARGET element (Input)",
+    edit: "Mode: Click any Process, Entity, Data Store, or Flow arrow to edit / rename",
     delete: "Mode: Click any element or flow to delete"
   };
-  document.getElementById('canvas-status').innerText = statusMap[mode];
+  document.getElementById('canvas-status').innerText = statusMap[mode] || `Mode: ${mode}`;
   renderDfd();
 }
 
 function addDfdNode(type) {
   const id = "node_" + Date.now();
   let name = "";
+  let desc = "";
   let defaultX = 80 + Math.random() * 200;
   let defaultY = 60 + Math.random() * 200;
 
   if (type === 'process') {
     name = "1.0 COMPUTE SALES";
+    desc = "Transforms input data items into computed results or documents.";
   } else if (type === 'entity') {
     name = "CUSTOMER";
+    desc = "External person, organization, or system outside boundary.";
   } else if (type === 'store') {
     name = "D1 SALES";
+    desc = "Passive repository of persistent data at rest.";
   }
 
-  dfdNodes.push({ id, type, name, x: defaultX, y: defaultY });
+  dfdNodes.push({ id, type, name, desc, x: defaultX, y: defaultY });
   renderDfd();
   auditDfdDiagram();
   showToast(`Added ${type.toUpperCase()}: ${name}`, 'success');
@@ -118,17 +127,17 @@ function clearDfdCanvas() {
 
 function loadBuggyDfdPreset() {
   dfdNodes = [
-    { id: "n1", type: "entity", name: "CUSTOMER", x: 40, y: 80 },
-    { id: "n2", type: "store", name: "D1 SALES_STORE", x: 400, y: 80 },
-    { id: "n3", type: "store", name: "D2 INVENTORY", x: 400, y: 240 },
-    { id: "n4", type: "process", name: "CALCULATOR", x: 180, y: 240 },
-    { id: "n5", type: "process", name: "3.0 LOG ERRORS", x: 40, y: 380 }
+    { id: "n1", type: "entity", name: "CUSTOMER", desc: "Shopper at store checkout", x: 40, y: 80 },
+    { id: "n2", type: "store", name: "D1 SALES_STORE", desc: "Historical transactions repository", x: 400, y: 80 },
+    { id: "n3", type: "store", name: "D2 INVENTORY", desc: "Stock quantities and product prices", x: 400, y: 240 },
+    { id: "n4", type: "process", name: "CALCULATOR", desc: "Calculates total amount", x: 180, y: 240 },
+    { id: "n5", type: "process", name: "3.0 LOG ERRORS", desc: "System crash dump handler", x: 40, y: 380 }
   ];
 
   dfdConnections = [
-    { id: "c1", from: "n1", to: "n2", label: "DirectOrderData" }, // Sin #3
-    { id: "c2", from: "n2", to: "n3", label: "SyncData" },        // Sin #1
-    { id: "c3", from: "n1", to: "n5", label: "CrashLog" }         // Sin #5 (Black Hole)
+    { id: "c1", from: "n1", to: "n2", label: "DirectOrderData", desc: "Customer directly writing into database" }, // Sin #3
+    { id: "c2", from: "n2", to: "n3", label: "SyncData", desc: "Direct database-to-database pipe" },        // Sin #1
+    { id: "c3", from: "n1", to: "n5", label: "CrashLog", desc: "Data going into black hole process" }         // Sin #5 (Black Hole)
   ];
 
   renderDfd();
@@ -138,23 +147,23 @@ function loadBuggyDfdPreset() {
 
 function loadPerfectDfdPreset() {
   dfdNodes = [
-    { id: "n1", type: "entity", name: "CUSTOMER", x: 40, y: 80 },
-    { id: "n2", type: "process", name: "1.0 PROCESS ITEM PURCHASE", x: 270, y: 75 },
-    { id: "n3", type: "store", name: "D1 INVENTORY", x: 530, y: 80 },
-    { id: "n4", type: "entity", name: "CASHIER", x: 40, y: 230 },
-    { id: "n5", type: "store", name: "D2 SALES ARCHIVE", x: 270, y: 230 },
-    { id: "n6", type: "process", name: "2.0 UPDATE & RECONCILE", x: 530, y: 225 },
-    { id: "n7", type: "entity", name: "STORE MANAGER", x: 530, y: 375 }
+    { id: "n1", type: "entity", name: "CUSTOMER", desc: "Shopper initiating item purchase", x: 40, y: 80 },
+    { id: "n2", type: "process", name: "1.0 PROCESS ITEM PURCHASE", desc: "Scans item barcode, calculates price, VAT, and prints receipt", x: 270, y: 75 },
+    { id: "n3", type: "store", name: "D1 INVENTORY", desc: "Product catalog, SKU stock levels, unit prices", x: 530, y: 80 },
+    { id: "n4", type: "entity", name: "CASHIER", desc: "Point-of-sale checkout operator", x: 40, y: 230 },
+    { id: "n5", type: "store", name: "D2 SALES ARCHIVE", desc: "Audit log of finalized sales transactions", x: 270, y: 230 },
+    { id: "n6", type: "process", name: "2.0 UPDATE & RECONCILE", desc: "Reconciles sales register and adjusts warehouse inventory counts", x: 530, y: 225 },
+    { id: "n7", type: "entity", name: "STORE MANAGER", desc: "Branch supervisor reviewing sales and stock reports", x: 530, y: 375 }
   ];
 
   dfdConnections = [
-    { id: "c1", from: "n1", to: "n2", label: "Item_Barcode" },
-    { id: "c2", from: "n3", to: "n2", label: "Price_And_Details" },
-    { id: "c3", from: "n2", to: "n4", label: "Computed_Receipt" },
-    { id: "c4", from: "n2", to: "n5", label: "Recorded_Sale" },
-    { id: "c5", from: "n5", to: "n6", label: "Sales_Audit_Data" },
-    { id: "c6", from: "n6", to: "n3", label: "Inventory_Adjustment" },
-    { id: "c7", from: "n6", to: "n7", label: "Daily_Revenue_Report" }
+    { id: "c1", from: "n1", to: "n2", label: "Item_Barcode", desc: "Product barcode scanned from merchandise" },
+    { id: "c2", from: "n3", to: "n2", label: "Price_And_Details", desc: "Unit price, description, and tax rate from inventory" },
+    { id: "c3", from: "n2", to: "n4", label: "Computed_Receipt", desc: "Printed customer receipt with itemized charges" },
+    { id: "c4", from: "n2", to: "n5", label: "Recorded_Sale", desc: "Finalized sales transaction record" },
+    { id: "c5", from: "n5", to: "n6", label: "Sales_Audit_Data", desc: "Batch sales records for daily balancing" },
+    { id: "c6", from: "n6", to: "n3", label: "Inventory_Adjustment", desc: "Stock decrement instruction per sold item" },
+    { id: "c7", from: "n6", to: "n7", label: "Daily_Revenue_Report", desc: "End-of-day sales summary report" }
   ];
 
   renderDfd();
@@ -286,6 +295,11 @@ function renderDfd() {
       flowGroup.appendChild(inBadge);
     }
 
+    // Hover tooltip for data flow (shows name, endpoints, and optional description)
+    const flowTitle = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    flowTitle.textContent = `Flow: ${c.label} (${fromNode.name} ➔ ${toNode.name})${c.desc ? '\nDescription: ' + c.desc : ''}\n(Click in Edit mode or double-click to rename/edit)`;
+    flowGroup.appendChild(flowTitle);
+
     flowGroup.addEventListener('click', (e) => {
       e.stopPropagation();
       if (currentCanvasMode === 'delete') {
@@ -293,9 +307,16 @@ function renderDfd() {
         renderDfd();
         auditDfdDiagram();
         showToast("Deleted Data Flow", "warning");
+      } else if (currentCanvasMode === 'edit') {
+        openEditFlowModal(c);
       } else {
-        showToast(`Flow [${c.label}]: Output from ${fromNode.name} ➔ Input to ${toNode.name}`, 'info');
+        showToast(`Flow [${c.label}]: Output from ${fromNode.name} ➔ Input to ${toNode.name}${c.desc ? ' (' + c.desc + ')' : ''}`, 'info');
       }
+    });
+
+    flowGroup.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      openEditFlowModal(c);
     });
 
     connGroup.appendChild(flowGroup);
@@ -307,6 +328,11 @@ function renderDfd() {
     g.setAttribute("class", "dfd-node" + (selectedNodeForConnection === node.id ? " selected" : ""));
     g.setAttribute("transform", `translate(${node.x}, ${node.y})`);
     g.setAttribute("data-id", node.id);
+
+    // Native hover tooltip for node (type, name, description)
+    const nodeTitle = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    nodeTitle.textContent = `${node.type.toUpperCase()}: ${node.name}${node.desc ? '\nDescription: ' + node.desc : ''}\n(Click in Edit mode or double-click to rename/edit)`;
+    g.appendChild(nodeTitle);
 
     const dims = getNodeDims(node);
 
@@ -327,6 +353,14 @@ function renderDfd() {
       bar.setAttribute("stroke", "#1e293b");
       bar.setAttribute("stroke-width", "1.2");
 
+      let procId = "PROCESS";
+      let procLabel = node.name;
+      const pMatch = node.name.match(/^(\d+(?:\.\d+)?)\s*(.*)$/);
+      if (pMatch) {
+        procId = "PROCESS " + pMatch[1];
+        procLabel = pMatch[2] || node.name;
+      }
+
       const textId = document.createElementNS("http://www.w3.org/2000/svg", "text");
       textId.setAttribute("x", dims.w / 2);
       textId.setAttribute("y", "12");
@@ -334,16 +368,18 @@ function renderDfd() {
       textId.setAttribute("font-size", "9");
       textId.setAttribute("font-weight", "bold");
       textId.setAttribute("text-anchor", "middle");
-      textId.textContent = "PROCESS";
+      textId.textContent = procId;
 
       const textName = document.createElementNS("http://www.w3.org/2000/svg", "text");
       textName.setAttribute("x", dims.w / 2);
       textName.setAttribute("y", "36");
       textName.setAttribute("fill", "#0f172a");
-      textName.setAttribute("font-size", "9");
       textName.setAttribute("font-weight", "bold");
       textName.setAttribute("text-anchor", "middle");
-      textName.textContent = node.name;
+      if (procLabel.length > 22) textName.setAttribute("font-size", "7.5");
+      else if (procLabel.length > 16) textName.setAttribute("font-size", "8.5");
+      else textName.setAttribute("font-size", "9");
+      textName.textContent = procLabel;
 
       g.appendChild(rect);
       g.appendChild(bar);
@@ -362,9 +398,11 @@ function renderDfd() {
       textName.setAttribute("x", dims.w / 2);
       textName.setAttribute("y", dims.h / 2 + 4);
       textName.setAttribute("fill", "#1e293b");
-      textName.setAttribute("font-size", "9.5");
       textName.setAttribute("font-weight", "bold");
       textName.setAttribute("text-anchor", "middle");
+      if (node.name.length > 20) textName.setAttribute("font-size", "7.5");
+      else if (node.name.length > 14) textName.setAttribute("font-size", "8.5");
+      else textName.setAttribute("font-size", "9.5");
       textName.textContent = node.name;
 
       g.appendChild(rect);
@@ -386,6 +424,14 @@ function renderDfd() {
       bar.setAttribute("stroke", "#1e293b");
       bar.setAttribute("stroke-width", "1.8");
 
+      let storeId = "D";
+      let storeLabel = node.name;
+      const dMatch = node.name.match(/^(D\d+)\s*(.*)$/i);
+      if (dMatch) {
+        storeId = dMatch[1].toUpperCase();
+        storeLabel = dMatch[2] || dMatch[1];
+      }
+
       const textId = document.createElementNS("http://www.w3.org/2000/svg", "text");
       textId.setAttribute("x", "15");
       textId.setAttribute("y", dims.h / 2 + 4);
@@ -393,16 +439,18 @@ function renderDfd() {
       textId.setAttribute("font-size", "9");
       textId.setAttribute("font-weight", "bold");
       textId.setAttribute("text-anchor", "middle");
-      textId.textContent = "D1";
+      textId.textContent = storeId;
 
       const textName = document.createElementNS("http://www.w3.org/2000/svg", "text");
       textName.setAttribute("x", (dims.w + 30) / 2);
       textName.setAttribute("y", dims.h / 2 + 4);
       textName.setAttribute("fill", "#0f172a");
-      textName.setAttribute("font-size", "9");
       textName.setAttribute("font-weight", "bold");
       textName.setAttribute("text-anchor", "middle");
-      textName.textContent = node.name;
+      if (storeLabel.length > 20) textName.setAttribute("font-size", "7.5");
+      else if (storeLabel.length > 14) textName.setAttribute("font-size", "8.5");
+      else textName.setAttribute("font-size", "9");
+      textName.textContent = storeLabel;
 
       g.appendChild(rect);
       g.appendChild(bar);
@@ -413,6 +461,10 @@ function renderDfd() {
     g.addEventListener('mousedown', (e) => onNodeMouseDown(e, node));
     g.addEventListener('touchstart', (e) => onNodeTouchStart(e, node), { passive: false });
     g.addEventListener('click', (e) => onNodeClick(e, node));
+    g.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      openEditNodeModal(node);
+    });
 
     nodeGroup.appendChild(g);
   });
@@ -511,6 +563,11 @@ function onNodeClick(e, node) {
     return;
   }
 
+  if (currentCanvasMode === 'edit') {
+    openEditNodeModal(node);
+    return;
+  }
+
   if (currentCanvasMode === 'connect') {
     if (!selectedNodeForConnection) {
       selectedNodeForConnection = node.id;
@@ -526,7 +583,8 @@ function onNodeClick(e, node) {
           id: "conn_" + Date.now(),
           from: fromNode.id,
           to: toNode.id,
-          label: "RecursiveLoop"
+          label: "RecursiveLoop",
+          desc: "Iterative recursive feedback loop"
         });
         selectedNodeForConnection = null;
         document.getElementById('canvas-status').innerText = "Data flow created. Auditing architecture...";
@@ -535,12 +593,13 @@ function onNodeClick(e, node) {
         showToast("Created recursive loop flow (Mortal Sin #9)", "danger");
       } else {
         // Open Custom In-App Modal
-        openDataFlowModal(fromNode, toNode, (flowName) => {
+        openDataFlowModal(fromNode, toNode, (flowName, flowDesc) => {
           dfdConnections.push({
             id: "conn_" + Date.now(),
             from: fromNode.id,
             to: toNode.id,
-            label: flowName || "Data_Flow"
+            label: flowName || "Data_Flow",
+            desc: flowDesc || ""
           });
           selectedNodeForConnection = null;
           document.getElementById('canvas-status').innerText = `Connected: ${fromNode.name} ➔ ${toNode.name}`;
@@ -550,51 +609,321 @@ function onNodeClick(e, node) {
         });
       }
     }
+  } else if (currentCanvasMode === 'move') {
+    showToast(`[${node.name}]${node.desc ? ': ' + node.desc : ''}`, 'info');
   }
 }
 
 /* ========================================================
    CUSTOM MODAL & TOAST MANAGERS (Zero browser popups)
    ======================================================== */
-function openDataFlowModal(fromNode, toNode, callback) {
-  activeModalCallback = callback;
+function openEditNodeModal(node) {
   const modal = document.getElementById('app-modal');
+  const title = document.getElementById('modal-title');
+  const nameLabel = document.getElementById('modal-name-label');
   const input = document.getElementById('modal-input');
-  const desc = document.getElementById('modal-desc');
+  const chipsHeader = document.getElementById('modal-chips-header');
   const chipsBox = document.getElementById('modal-chips');
+  const descLabel = document.getElementById('modal-desc-field-label');
+  const descInput = document.getElementById('modal-desc-input');
+  const helpText = document.getElementById('modal-desc');
+  const confirmBtn = document.getElementById('modal-confirm-btn');
 
-  desc.innerHTML = `Enter the noun phrase representing data leaving <strong>[${fromNode.name}]</strong> as Output and arriving at <strong>[${toNode.name}]</strong> as Input:`;
-  input.value = "Data_Flow";
+  let typeLabel = "Element";
+  let promptText = "";
+  let suggestions = [];
 
-  // Contextual chip suggestions
-  const suggestions = ["Item_Info", "Product_Details", "Computed_Sales", "Payment_Record", "Receipt", "Customer_Details", "Verification_Token", "Audit_Log"];
+  if (node.type === 'process') {
+    typeLabel = "Process";
+    promptText = "<strong>Process Rule:</strong> Must use an <strong>active verb phrase</strong> (e.g. <em>1.0 PROCESS ITEM PURCHASE</em>, <em>2.0 UPDATE INVENTORY</em>). Inputs are transformed into outputs.";
+    suggestions = [
+      "1.0 PROCESS ITEM PURCHASE",
+      "2.0 UPDATE & RECONCILE",
+      "3.0 VERIFY ENROLMENT",
+      "4.0 CALCULATE SALES TAX",
+      "5.0 AUTHENTICATE USER",
+      "6.0 GENERATE REPORT",
+      "7.0 RECORD PAYMENT"
+    ];
+    if (descLabel) descLabel.innerText = "Process Specification / Logic Description (Optional):";
+  } else if (node.type === 'entity') {
+    typeLabel = "External Entity";
+    promptText = "<strong>External Entity Rule:</strong> Stakeholders or external systems outside the system boundary (e.g. <em>CUSTOMER</em>, <em>CASHIER</em>). Must be <strong>singular noun phrase</strong>.";
+    suggestions = [
+      "CUSTOMER",
+      "CASHIER",
+      "STUDENT",
+      "STORE MANAGER",
+      "BANK HOST",
+      "SUPPLIER",
+      "ADMINISTRATOR",
+      "ACCOUNTING DEPT"
+    ];
+    if (descLabel) descLabel.innerText = "Role / External System Description (Optional):";
+  } else if (node.type === 'store') {
+    typeLabel = "Data Store";
+    promptText = "<strong>Data Store Rule:</strong> Passive repositories of persistent data at rest (e.g. <em>D1 INVENTORY</em>). Format: <strong>D[#] + Plural Noun</strong>. Cannot connect directly to entities or other stores.";
+    suggestions = [
+      "D1 INVENTORY",
+      "D2 SALES ARCHIVE",
+      "D3 CUSTOMER DATABASE",
+      "D4 ENROLMENT RECORDS",
+      "D5 AUDIT LOGS",
+      "D6 TRANSACTION JOURNAL"
+    ];
+    if (descLabel) descLabel.innerText = "Data Stored / Schema Description (Optional):";
+  }
+
+  title.innerHTML = `<span>✏️</span> Edit ${typeLabel}: ${node.name}`;
+  if (nameLabel) nameLabel.innerText = `${typeLabel} Name / Identifier:`;
+  input.value = node.name;
+  if (descInput) descInput.value = node.desc || "";
+  helpText.innerHTML = promptText;
+  if (chipsHeader) chipsHeader.innerText = `Quick Suggestions for ${typeLabel}:`;
+
   chipsBox.innerHTML = "";
   suggestions.forEach(s => {
     const btn = document.createElement('button');
     btn.className = "chip-btn";
     btn.type = "button";
     btn.textContent = s;
-    btn.onclick = () => { input.value = s; };
+    btn.onclick = () => {
+      input.value = s;
+      input.focus();
+    };
     chipsBox.appendChild(btn);
   });
 
-  modal.classList.add('active');
-  input.focus();
-  input.select();
+  confirmBtn.textContent = "Save Changes";
 
-  // Setup confirm button handler
-  const confirmBtn = document.getElementById('modal-confirm-btn');
-  confirmBtn.onclick = () => {
-    const val = input.value.trim() || "Data_Flow";
+  const onConfirm = () => {
+    const newName = input.value.trim() || node.name;
+    const newDesc = descInput ? descInput.value.trim() : "";
+    const oldName = node.name;
+    node.name = newName;
+    node.desc = newDesc;
     closeAppModal();
-    if (activeModalCallback) activeModalCallback(val);
+    renderDfd();
+    auditDfdDiagram();
+    showToast(`Updated ${typeLabel}: "${oldName}" ➔ "${newName}"`, 'success');
   };
+
+  confirmBtn.onclick = onConfirm;
+
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onConfirm();
+    } else if (e.key === 'Escape') {
+      closeAppModal();
+    }
+  };
+
+  if (descInput) {
+    descInput.onkeydown = (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        onConfirm();
+      } else if (e.key === 'Escape') {
+        closeAppModal();
+      }
+    };
+  }
+
+  modal.classList.add('active');
+  setTimeout(() => {
+    input.focus();
+    input.select();
+  }, 50);
+}
+
+function openEditFlowModal(c) {
+  const modal = document.getElementById('app-modal');
+  const title = document.getElementById('modal-title');
+  const nameLabel = document.getElementById('modal-name-label');
+  const input = document.getElementById('modal-input');
+  const chipsHeader = document.getElementById('modal-chips-header');
+  const chipsBox = document.getElementById('modal-chips');
+  const descLabel = document.getElementById('modal-desc-field-label');
+  const descInput = document.getElementById('modal-desc-input');
+  const helpText = document.getElementById('modal-desc');
+  const confirmBtn = document.getElementById('modal-confirm-btn');
+
+  const fromNode = dfdNodes.find(n => n.id === c.from);
+  const toNode = dfdNodes.find(n => n.id === c.to);
+  const fromName = fromNode ? fromNode.name : "Source";
+  const toName = toNode ? toNode.name : "Target";
+
+  title.innerHTML = `<span>✏️</span> Edit Data Flow: ${c.label}`;
+  if (nameLabel) nameLabel.innerText = "Data Flow Label (Noun Phrase):";
+  input.value = c.label;
+  if (descInput) descInput.value = c.desc || "";
+  if (descLabel) descLabel.innerText = "Data Payload Description / Fields (Optional):";
+
+  helpText.innerHTML = `<strong>Data Flow Rule:</strong> Flow represents data in motion from <strong>[${fromName}]</strong> (Output) ➔ <strong>[${toName}]</strong> (Input). Must be a <strong>noun phrase</strong> describing the data packet.`;
+  if (chipsHeader) chipsHeader.innerText = "Quick Suggestions for Data Flow:";
+
+  const suggestions = [
+    "Item_Barcode",
+    "Price_And_Details",
+    "Computed_Receipt",
+    "Recorded_Sale",
+    "Sales_Audit_Data",
+    "Inventory_Adjustment",
+    "Daily_Revenue_Report",
+    "Payment_Slip",
+    "Student_Credentials",
+    "Enrolment_Status",
+    "Transaction_Summary"
+  ];
+
+  chipsBox.innerHTML = "";
+  suggestions.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = "chip-btn";
+    btn.type = "button";
+    btn.textContent = s;
+    btn.onclick = () => {
+      input.value = s;
+      input.focus();
+    };
+    chipsBox.appendChild(btn);
+  });
+
+  confirmBtn.textContent = "Save Changes";
+
+  const onConfirm = () => {
+    const newLabel = input.value.trim() || c.label;
+    const newDesc = descInput ? descInput.value.trim() : "";
+    const oldLabel = c.label;
+    c.label = newLabel;
+    c.desc = newDesc;
+    closeAppModal();
+    renderDfd();
+    auditDfdDiagram();
+    showToast(`Updated Data Flow: "${oldLabel}" ➔ "${newLabel}"`, 'success');
+  };
+
+  confirmBtn.onclick = onConfirm;
+
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onConfirm();
+    } else if (e.key === 'Escape') {
+      closeAppModal();
+    }
+  };
+
+  if (descInput) {
+    descInput.onkeydown = (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        onConfirm();
+      } else if (e.key === 'Escape') {
+        closeAppModal();
+      }
+    };
+  }
+
+  modal.classList.add('active');
+  setTimeout(() => {
+    input.focus();
+    input.select();
+  }, 50);
+}
+
+function openDataFlowModal(fromNode, toNode, callback) {
+  activeModalCallback = callback;
+  const modal = document.getElementById('app-modal');
+  const title = document.getElementById('modal-title');
+  const nameLabel = document.getElementById('modal-name-label');
+  const input = document.getElementById('modal-input');
+  const chipsHeader = document.getElementById('modal-chips-header');
+  const chipsBox = document.getElementById('modal-chips');
+  const descLabel = document.getElementById('modal-desc-field-label');
+  const descInput = document.getElementById('modal-desc-input');
+  const helpText = document.getElementById('modal-desc');
+  const confirmBtn = document.getElementById('modal-confirm-btn');
+
+  title.innerHTML = `<span>🔗</span> Create Data Flow`;
+  if (nameLabel) nameLabel.innerText = "Data Flow Label (Noun Phrase):";
+  input.value = "Data_Flow";
+  if (descInput) descInput.value = "";
+  if (descLabel) descLabel.innerText = "Data Payload Description (Optional):";
+  helpText.innerHTML = `Enter the noun phrase representing data leaving <strong>[${fromNode.name}]</strong> as Output and arriving at <strong>[${toNode.name}]</strong> as Input:`;
+  if (chipsHeader) chipsHeader.innerText = "Quick Suggestions (Standard Nouns):";
+
+  // Contextual chip suggestions
+  const suggestions = [
+    "Item_Barcode",
+    "Price_And_Details",
+    "Computed_Receipt",
+    "Recorded_Sale",
+    "Sales_Audit_Data",
+    "Payment_Slip",
+    "Enrolment_Data",
+    "Daily_Report"
+  ];
+  chipsBox.innerHTML = "";
+  suggestions.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = "chip-btn";
+    btn.type = "button";
+    btn.textContent = s;
+    btn.onclick = () => { input.value = s; input.focus(); };
+    chipsBox.appendChild(btn);
+  });
+
+  confirmBtn.textContent = "Confirm Flow";
+
+  const onConfirm = () => {
+    const flowName = input.value.trim() || "Data_Flow";
+    const flowDesc = descInput ? descInput.value.trim() : "";
+    closeAppModal();
+    if (activeModalCallback) activeModalCallback(flowName, flowDesc);
+  };
+
+  confirmBtn.onclick = onConfirm;
+
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onConfirm();
+    } else if (e.key === 'Escape') {
+      closeAppModal();
+    }
+  };
+
+  if (descInput) {
+    descInput.onkeydown = (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        onConfirm();
+      } else if (e.key === 'Escape') {
+        closeAppModal();
+      }
+    };
+  }
+
+  modal.classList.add('active');
+  setTimeout(() => {
+    input.focus();
+    input.select();
+  }, 50);
 }
 
 function closeAppModal() {
   const modal = document.getElementById('app-modal');
   if (modal) modal.classList.remove('active');
   selectedNodeForConnection = null;
+  activeModalCallback = null;
+  const input = document.getElementById('modal-input');
+  if (input) input.onkeydown = null;
+  const descInput = document.getElementById('modal-desc-input');
+  if (descInput) descInput.onkeydown = null;
+  const confirmBtn = document.getElementById('modal-confirm-btn');
+  if (confirmBtn) confirmBtn.onclick = null;
   renderDfd();
 }
 

@@ -528,6 +528,26 @@ textarea.essay-input:focus {
 .dfd-node:hover rect { stroke: var(--accent) !important; stroke-width: 2.5px !important; }
 .dfd-node.selected rect { stroke: var(--primary-light) !important; stroke-width: 3px !important; }
 
+#dfd-svg[data-mode="edit"] .dfd-node,
+#dfd-svg[data-mode="edit"] .data-flow-group {
+  cursor: pointer;
+}
+#dfd-svg[data-mode="edit"] .dfd-node:hover rect {
+  stroke: #d97706 !important;
+  stroke-width: 2.5px !important;
+}
+#dfd-svg[data-mode="delete"] .dfd-node,
+#dfd-svg[data-mode="delete"] .data-flow-group {
+  cursor: not-allowed;
+}
+#dfd-svg[data-mode="delete"] .dfd-node:hover rect {
+  stroke: var(--danger) !important;
+  stroke-width: 2.5px !important;
+}
+#dfd-svg[data-mode="connect"] .dfd-node {
+  cursor: crosshair;
+}
+
 .dfd-audit-panel {
   background: #ffffff;
   border: 1px solid var(--border);
@@ -794,6 +814,27 @@ textarea.essay-input:focus {
   outline: none;
   border-color: var(--primary-light);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.modal-field-label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+
+.modal-help-text {
+  font-size: 0.78rem;
+  color: var(--slate);
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+  line-height: 1.45;
+  margin-bottom: 14px;
 }
 
 .modal-chips-label {
