@@ -11,6 +11,14 @@ let draggedNode = null;
 let dragOffset = { x: 0, y: 0 };
 let activeModalCallback = null;
 
+// Canvas Zoom & Pan State
+const BASE_VIEW_WIDTH = 760;
+const BASE_VIEW_HEIGHT = 480;
+let canvasZoom = 1.0;
+let canvasPan = { x: 0, y: 0 };
+let isPanningCanvas = false;
+let panStart = { clientX: 0, clientY: 0, panX: 0, panY: 0 };
+
 const SCENARIOS = {
   pos: {
     title: "Convenience Store POS System (P1.0)",
@@ -120,6 +128,7 @@ function clearDfdCanvas() {
   dfdNodes = [];
   dfdConnections = [];
   selectedNodeForConnection = null;
+  resetCanvasZoom();
   renderDfd();
   auditDfdDiagram();
   showToast("Canvas cleared", "warning");
@@ -471,6 +480,239 @@ function renderDfd() {
 }
 
 /* ========================================================
+   CANVAS ZOOM & PAN SYSTEM
+   ======================================================== */
+function updateCanvasViewBox() {
+  const svg = document.getElementById('dfd-svg');
+  if (!svg) return;
+  const w = BASE_VIEW_WIDTH / canvasZoom;
+  const h = BASE_VIEW_HEIGHT / canvasZoom;
+  svg.setAttribute('viewBox', `${canvasPan.x} ${canvasPan.y} ${w} ${h}`);
+
+  const display = document.getElementById('zoom-level-display');
+  if (display) {
+    display.textContent = `${Math.round(canvasZoom * 100)}%`;
+  }
+}
+
+function zoomCanvas(delta, centerPoint) {
+  const oldZoom = canvasZoom;
+  let newZoom = Math.min(2.5, Math.max(0.35, canvasZoom + delta));
+  newZoom = Math.round(newZoom * 100) / 100;
+  if (newZoom === oldZoom) return;
+
+  let cx, cy;
+  if (centerPoint) {
+    cx = centerPoint.x;
+    cy = centerPoint.y;
+  } else {
+    cx = canvasPan.x + (BASE_VIEW_WIDTH / oldZoom) / 2;
+    cy = canvasPan.y + (BASE_VIEW_HEIGHT / oldZoom) / 2;
+  }
+
+  const oldW = BASE_VIEW_WIDTH / oldZoom;
+  const oldH = BASE_VIEW_HEIGHT / oldZoom;
+  const ratioX = (cx - canvasPan.x) / oldW;
+  const ratioY = (cy - canvasPan.y) / oldH;
+
+  const newW = BASE_VIEW_WIDTH / newZoom;
+  const newH = BASE_VIEW_HEIGHT / newZoom;
+
+  canvasPan.x = Math.round(cx - ratioX * newW);
+  canvasPan.y = Math.round(cy - ratioY * newH);
+  canvasZoom = newZoom;
+
+  updateCanvasViewBox();
+}
+
+function resetCanvasZoom() {
+  canvasZoom = 1.0;
+  canvasPan = { x: 0, y: 0 };
+  updateCanvasViewBox();
+  showToast("Canvas zoom reset to 100%", "info");
+}
+
+function fitCanvasToElements() {
+  if (dfdNodes.length === 0) {
+    resetCanvasZoom();
+    return;
+  }
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  dfdNodes.forEach(n => {
+    const dims = getNodeDims(n);
+    minX = Math.min(minX, n.x);
+    minY = Math.min(minY, n.y);
+    maxX = Math.max(maxX, n.x + dims.w);
+    maxY = Math.max(maxY, n.y + dims.h);
+  });
+
+  const pad = 60;
+  minX -= pad;
+  minY -= pad;
+  maxX += pad;
+  maxY += pad;
+
+  const diagW = Math.max(200, maxX - minX);
+  const diagH = Math.max(150, maxY - minY);
+
+  const scaleX = BASE_VIEW_WIDTH / diagW;
+  const scaleY = BASE_VIEW_HEIGHT / diagH;
+  let targetZoom = Math.min(scaleX, scaleY);
+  targetZoom = Math.min(1.8, Math.max(0.35, Math.round(targetZoom * 100) / 100));
+
+  canvasZoom = targetZoom;
+  const viewW = BASE_VIEW_WIDTH / canvasZoom;
+  const viewH = BASE_VIEW_HEIGHT / canvasZoom;
+
+  canvasPan.x = Math.round((minX + maxX) / 2 - viewW / 2);
+  canvasPan.y = Math.round((minY + maxY) / 2 - viewH / 2);
+
+  updateCanvasViewBox();
+  showToast(`Fitted diagram to view (${Math.round(canvasZoom * 100)}%)`, "info");
+}
+
+/* Background canvas panning (Mouse & Touch) */
+function onCanvasMouseDown(e) {
+  const isBackground = e.target.id === 'dfd-svg' ||
+                       e.target.id === 'svg-connections' ||
+                       e.target.id === 'svg-nodes' ||
+                       e.target.tagName === 'svg';
+  if (isBackground || e.button === 1) {
+    isPanningCanvas = true;
+    panStart = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      panX: canvasPan.x,
+      panY: canvasPan.y
+    };
+    const svg = document.getElementById('dfd-svg');
+    if (svg) svg.style.cursor = 'grab';
+    window.addEventListener('mousemove', onCanvasMouseMove);
+    window.addEventListener('mouseup', onCanvasMouseUp);
+  }
+}
+
+function onCanvasMouseMove(e) {
+  if (!isPanningCanvas) return;
+  const svg = document.getElementById('dfd-svg');
+  if (!svg) return;
+  const rect = svg.getBoundingClientRect();
+  const scaleX = (BASE_VIEW_WIDTH / canvasZoom) / (rect.width || 1);
+  const scaleY = (BASE_VIEW_HEIGHT / canvasZoom) / (rect.height || 1);
+
+  const dx = (e.clientX - panStart.clientX) * scaleX;
+  const dy = (e.clientY - panStart.clientY) * scaleY;
+
+  canvasPan.x = Math.round(panStart.panX - dx);
+  canvasPan.y = Math.round(panStart.panY - dy);
+  updateCanvasViewBox();
+}
+
+function onCanvasMouseUp() {
+  if (isPanningCanvas) {
+    isPanningCanvas = false;
+    const svg = document.getElementById('dfd-svg');
+    if (svg) svg.style.cursor = '';
+    window.removeEventListener('mousemove', onCanvasMouseMove);
+    window.removeEventListener('mouseup', onCanvasMouseUp);
+  }
+}
+
+let touchStartDist = 0;
+let touchStartZoom = 1.0;
+let touchCenter = { x: 0, y: 0 };
+
+function onCanvasTouchStart(e) {
+  if (e.touches.length === 2) {
+    // Pinch-to-zoom
+    e.preventDefault();
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    touchStartDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    touchStartZoom = canvasZoom;
+    const svg = document.getElementById('dfd-svg');
+    touchCenter = getSvgCoords(svg, (t1.clientX + t2.clientX) / 2, (t1.clientY + t2.clientY) / 2);
+    window.addEventListener('touchmove', onCanvasTouchMove, { passive: false });
+    window.addEventListener('touchend', onCanvasTouchEnd);
+  } else if (e.touches.length === 1) {
+    const isBackground = e.target.id === 'dfd-svg' ||
+                         e.target.id === 'svg-connections' ||
+                         e.target.id === 'svg-nodes' ||
+                         e.target.tagName === 'svg';
+    if (isBackground) {
+      isPanningCanvas = true;
+      panStart = {
+        clientX: e.touches[0].clientX,
+        clientY: e.touches[0].clientY,
+        panX: canvasPan.x,
+        panY: canvasPan.y
+      };
+      window.addEventListener('touchmove', onCanvasTouchMove, { passive: false });
+      window.addEventListener('touchend', onCanvasTouchEnd);
+    }
+  }
+}
+
+function onCanvasTouchMove(e) {
+  if (e.touches.length === 2 && touchStartDist > 0) {
+    e.preventDefault();
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    const factor = dist / touchStartDist;
+    let newZoom = Math.min(2.5, Math.max(0.35, touchStartZoom * factor));
+    newZoom = Math.round(newZoom * 100) / 100;
+    zoomCanvas(newZoom - canvasZoom, touchCenter);
+  } else if (e.touches.length === 1 && isPanningCanvas) {
+    if (e.cancelable) e.preventDefault();
+    const svg = document.getElementById('dfd-svg');
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const scaleX = (BASE_VIEW_WIDTH / canvasZoom) / (rect.width || 1);
+    const scaleY = (BASE_VIEW_HEIGHT / canvasZoom) / (rect.height || 1);
+
+    const dx = (e.touches[0].clientX - panStart.clientX) * scaleX;
+    const dy = (e.touches[0].clientY - panStart.clientY) * scaleY;
+
+    canvasPan.x = Math.round(panStart.panX - dx);
+    canvasPan.y = Math.round(panStart.panY - dy);
+    updateCanvasViewBox();
+  }
+}
+
+function onCanvasTouchEnd() {
+  isPanningCanvas = false;
+  touchStartDist = 0;
+  window.removeEventListener('touchmove', onCanvasTouchMove);
+  window.removeEventListener('touchend', onCanvasTouchEnd);
+}
+
+function initCanvasZoomAndPan() {
+  const svg = document.getElementById('dfd-svg');
+  if (!svg) return;
+
+  // Mouse wheel zoom centered on cursor
+  svg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const pt = getSvgCoords(svg, e.clientX, e.clientY);
+    const delta = e.deltaY < 0 ? 0.12 : -0.12;
+    zoomCanvas(delta, pt);
+  }, { passive: false });
+
+  svg.addEventListener('mousedown', onCanvasMouseDown);
+  svg.addEventListener('touchstart', onCanvasTouchStart, { passive: false });
+
+  updateCanvasViewBox();
+}
+
+// Auto-initialize zoom & pan listeners when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCanvasZoomAndPan);
+} else {
+  initCanvasZoomAndPan();
+}
+
+/* ========================================================
    MOUSE & TOUCH DRAG EVENTS (With Matrix-Accurate Coordinates)
    ======================================================== */
 function getSvgCoords(svg, clientX, clientY) {
@@ -485,12 +727,18 @@ function getSvgCoords(svg, clientX, clientY) {
     }
   }
   const rect = svg ? svg.getBoundingClientRect() : { left: 0, top: 0 };
-  return { x: clientX - rect.left, y: clientY - rect.top };
+  const scaleX = (BASE_VIEW_WIDTH / canvasZoom) / (rect.width || 1);
+  const scaleY = (BASE_VIEW_HEIGHT / canvasZoom) / (rect.height || 1);
+  return {
+    x: canvasPan.x + (clientX - rect.left) * scaleX,
+    y: canvasPan.y + (clientY - rect.top) * scaleY
+  };
 }
 
 function onNodeMouseDown(e, node) {
   if (currentCanvasMode !== 'move') return;
   e.preventDefault();
+  e.stopPropagation();
   draggedNode = node;
   const svg = document.getElementById('dfd-svg');
   const svgPt = getSvgCoords(svg, e.clientX, e.clientY);
@@ -505,8 +753,8 @@ function onNodeMouseMove(e) {
   if (!draggedNode) return;
   const svg = document.getElementById('dfd-svg');
   const svgPt = getSvgCoords(svg, e.clientX, e.clientY);
-  draggedNode.x = Math.max(10, Math.min(620, Math.round(svgPt.x - dragOffset.x)));
-  draggedNode.y = Math.max(10, Math.min(420, Math.round(svgPt.y - dragOffset.y)));
+  draggedNode.x = Math.max(-2000, Math.min(4000, Math.round(svgPt.x - dragOffset.x)));
+  draggedNode.y = Math.max(-2000, Math.min(4000, Math.round(svgPt.y - dragOffset.y)));
   renderDfd();
 }
 
@@ -520,6 +768,7 @@ function onNodeTouchStart(e, node) {
   if (e.touches.length > 1) return;
   if (currentCanvasMode === 'move') {
     if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
     draggedNode = node;
     const touch = e.touches[0];
     const svg = document.getElementById('dfd-svg');
@@ -539,8 +788,8 @@ function onNodeTouchMove(e) {
   const touch = e.touches[0];
   const svg = document.getElementById('dfd-svg');
   const svgPt = getSvgCoords(svg, touch.clientX, touch.clientY);
-  draggedNode.x = Math.max(10, Math.min(620, Math.round(svgPt.x - dragOffset.x)));
-  draggedNode.y = Math.max(10, Math.min(420, Math.round(svgPt.y - dragOffset.y)));
+  draggedNode.x = Math.max(-2000, Math.min(4000, Math.round(svgPt.x - dragOffset.x)));
+  draggedNode.y = Math.max(-2000, Math.min(4000, Math.round(svgPt.y - dragOffset.y)));
   renderDfd();
 }
 

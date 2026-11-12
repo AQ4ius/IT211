@@ -198,6 +198,16 @@
             <button class="canvas-mode-btn" id="btn-mode-edit" onclick="setCanvasMode('edit')">✏️ Edit / Rename</button>
             <button class="canvas-mode-btn" id="btn-mode-delete" onclick="setCanvasMode('delete')">❌ Delete Element</button>
           </div>
+
+          <!-- Canvas Zoom & Fit Controls -->
+          <div class="canvas-zoom-group">
+            <button class="canvas-zoom-btn" onclick="zoomCanvas(-0.15)" title="Zoom Out (or Scroll Wheel Down)">➖</button>
+            <span class="zoom-level-text" id="zoom-level-display" onclick="resetCanvasZoom()" title="Click to Reset Zoom">100%</span>
+            <button class="canvas-zoom-btn" onclick="zoomCanvas(0.15)" title="Zoom In (or Scroll Wheel Up)">➕</button>
+            <button class="canvas-zoom-btn" onclick="fitCanvasToElements()" title="Fit all shapes to view">🎯 Fit</button>
+            <button class="canvas-zoom-btn" onclick="resetCanvasZoom()" title="Reset to 100%">↺ 100%</button>
+          </div>
+
           <span style="font-size: 0.75rem; font-weight: 700; color: var(--slate);" id="canvas-status">Mode: Select &amp; Drag</span>
         </div>
 
@@ -220,7 +230,7 @@
         <div class="flow-legend">
           <span><div class="dot-blue"></div> Valid Flow: <strong>Output ➔ Input</strong></span>
           <span><div class="dot-red"></div> Mortal Sin Flow</span>
-          <span style="margin-left: auto;">💡 <em>Arrowheads indicate data consumed as Input by the pointed element</em></span>
+          <span style="margin-left: auto;">💡 <em>Mouse wheel: Zoom • Drag empty canvas: Pan • Double-click: Edit element</em></span>
         </div>
       </div>
 
