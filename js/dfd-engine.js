@@ -167,6 +167,106 @@ function getClosestPointOnRectPerimeter(pt, rx, ry, rw, rh) {
   return { relX, relY, x: Math.round(bestX), y: Math.round(bestY) };
 }
 
+/* ========================================================
+   GEOMETRY: LINE SEGMENT CROSSING & SPAGHETTI DETECTION
+   ======================================================== */
+function onSegment(p, q, r) {
+  return q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
+         q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y);
+}
+
+function lineSegmentsIntersect(p1, q1, p2, q2) {
+  // Ignore segments sharing common node port connections
+  const isClose = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) < 12;
+  if (isClose(p1, p2) || isClose(p1, q2) || isClose(q1, p2) || isClose(q1, q2)) {
+    return false;
+  }
+
+  function orientation(p, q, r) {
+    const val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+    if (Math.abs(val) < 1e-5) return 0; // Collinear
+    return val > 0 ? 1 : 2; // 1 = Clockwise, 2 = Counterclockwise
+  }
+
+  const o1 = orientation(p1, q1, p2);
+  const o2 = orientation(p1, q1, q2);
+  const o3 = orientation(p2, q2, p1);
+  const o4 = orientation(p2, q2, q1);
+
+  // General Case
+  if (o1 !== o2 && o3 !== o4) return true;
+
+  // Collinear Cases
+  if (o1 === 0 && onSegment(p1, p2, q1)) return true;
+  if (o2 === 0 && onSegment(p1, q2, q1)) return true;
+  if (o3 === 0 && onSegment(p2, p1, q2)) return true;
+  if (o4 === 0 && onSegment(p2, q1, q2)) return true;
+
+  return false;
+}
+
+function getConnectionPoints(c) {
+  const fromNode = dfdNodes.find(n => n.id === c.from);
+  const toNode = dfdNodes.find(n => n.id === c.to);
+  if (!fromNode || !toNode) return [];
+
+  const fromCenter = getNodeCenter(fromNode);
+  const toCenter = getNodeCenter(toNode);
+  const fromDims = getNodeDims(fromNode);
+  const toDims = getNodeDims(toNode);
+
+  c.waypoints = c.waypoints || [];
+
+  let startPt, endPt;
+  if (c.from === c.to) {
+    startPt = { x: fromNode.x + fromDims.w, y: fromNode.y + 15 };
+    endPt = { x: fromNode.x + fromDims.w, y: fromNode.y + fromDims.h - 15 };
+  } else {
+    if (c.targetAnchor) {
+      endPt = {
+        x: Math.round(toNode.x + toDims.w * c.targetAnchor.relX),
+        y: Math.round(toNode.y + toDims.h * c.targetAnchor.relY)
+      };
+    } else {
+      const refPt = c.waypoints.length > 0 ? c.waypoints[c.waypoints.length - 1] : fromCenter;
+      endPt = getRectIntersection(toCenter.x, toCenter.y, toDims.w, toDims.h, refPt.x, refPt.y);
+    }
+
+    if (c.sourceAnchor) {
+      startPt = {
+        x: Math.round(fromNode.x + fromDims.w * c.sourceAnchor.relX),
+        y: Math.round(fromNode.y + fromDims.h * c.sourceAnchor.relY)
+      };
+    } else {
+      const refPt = c.waypoints.length > 0 ? c.waypoints[0] : endPt;
+      startPt = getRectIntersection(fromCenter.x, fromCenter.y, fromDims.w, fromDims.h, refPt.x, refPt.y);
+    }
+  }
+
+  return (c.from === c.to) ? [startPt, endPt] : [startPt, ...c.waypoints, endPt];
+}
+
+function checkConnectionsCross(c1, c2) {
+  if (c1.id === c2.id) return false;
+  // Skip if same nodes connected
+  if ((c1.from === c2.from && c1.to === c2.to) || (c1.from === c2.to && c1.to === c2.from)) {
+    return false;
+  }
+
+  const pts1 = getConnectionPoints(c1);
+  const pts2 = getConnectionPoints(c2);
+  if (pts1.length < 2 || pts2.length < 2) return false;
+
+  for (let i = 0; i < pts1.length - 1; i++) {
+    for (let j = 0; j < pts2.length - 1; j++) {
+      if (lineSegmentsIntersect(pts1[i], pts1[i + 1], pts2[j], pts2[j + 1])) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 /* Waypoint Drag Handlers (Arduino-style wire bend points) */
 function startDraggingWaypoint(e, connection, index) {
   e.preventDefault();
@@ -727,8 +827,13 @@ function renderDfd() {
           openEditFlowModal(c);
           return;
         }
+        if (currentCanvasMode !== 'bend') {
+          // In select/move mode, clicking the wire inspects it and does NOT add bend points
+          showToast(`Flow [${c.label}]: Output from ${fromNode.name} -> Input to ${toNode.name}${c.desc ? ' (' + c.desc + ')' : ''}`, 'info');
+          return;
+        }
 
-        // Add bend point at mouse position
+        // Add bend point at mouse position (Only in 'bend' mode!)
         const svg = document.getElementById('dfd-svg');
         const svgPt = getSvgCoords(svg, e.clientX, e.clientY);
 
@@ -762,6 +867,11 @@ function renderDfd() {
         }
         if (currentCanvasMode === 'edit') {
           openEditFlowModal(c);
+          return;
+        }
+        if (currentCanvasMode !== 'bend') {
+          // In select/move mode, tapping the wire inspects it and does NOT add bend points
+          showToast(`Flow [${c.label}]: Output from ${fromNode.name} -> Input to ${toNode.name}${c.desc ? ' (' + c.desc + ')' : ''}`, 'info');
           return;
         }
 
@@ -2063,6 +2173,118 @@ function auditDfdDiagram() {
         title: "Mortal Sin #8: Infinite Sink Data Store",
         desc: `Data store [${store.name}] is populated but no process ever queries or retrieves its data.`
       });
+    }
+
+    // Check Data Store Naming Convention (D# + Plural Noun in ALL CAPS)
+    const storeNameTrim = store.name.trim();
+    if (!/^D\d+\s+[A-Z0-9_\s]+$/i.test(storeNameTrim)) {
+      sinsFound.push({
+        title: "Syntax Warning: Data Store Naming Convention",
+        desc: `Data store [${store.name}] must follow the standard D[#] + PLURAL NOUN format (e.g. 'D1 SALES ARCHIVE', 'D2 PAYMENTS').`
+      });
+    }
+  });
+
+  // Check Drawing Rule: No Crossing of Data Flow Lines (Spaghetti Wiring)
+  const checkedCrossingPairs = new Set();
+  dfdConnections.forEach(c1 => {
+    dfdConnections.forEach(c2 => {
+      if (c1.id >= c2.id) return;
+      const pairKey = `${c1.id}_${c2.id}`;
+      if (checkedCrossingPairs.has(pairKey)) return;
+      checkedCrossingPairs.add(pairKey);
+
+      if (checkConnectionsCross(c1, c2)) {
+        sinsFound.push({
+          title: "Drawing Rule Violation: Crossing Data Flow Lines",
+          desc: `Data flow [${c1.label}] crosses directly over [${c2.label}]. DFD layout principles forbid crossing lines (spaghetti wiring). Use bend points, adjust arrowheads, or reposition elements to route cleanly.`
+        });
+      }
+    });
+  });
+
+  // Check Context Diagram Level Rule (No Data Stores in Context View)
+  const scenarioVal = document.getElementById('scenario-selector')?.value;
+  const isContextDiagram = scenarioVal === 'atm' || (dfdNodes.filter(n => n.type === 'process').length === 1 && dfdNodes.some(n => n.name.includes("0") || n.name.toLowerCase().includes("system")));
+  if (isContextDiagram) {
+    const storesInContext = dfdNodes.filter(n => n.type === 'store');
+    if (storesInContext.length > 0) {
+      sinsFound.push({
+        title: "Context Diagram Rule Violation: Data Store in Context View",
+        desc: `Data store [${storesInContext.map(s => s.name).join(", ")}] is strictly prohibited in a Context Diagram (Level 0 Overview). Context Diagrams show only Process 0 and external entities. Data stores only enter at Level 0 decomposition.`
+      });
+    }
+  }
+
+  // Check Sin 10: Double-Headed / Bidirectional Flow Anti-Pattern
+  const checkedFlowPairs = new Set();
+  dfdConnections.forEach(c1 => {
+    dfdConnections.forEach(c2 => {
+      if (c1.id >= c2.id) return;
+      if (c1.from === c2.to && c1.to === c2.from) {
+        const pairKey = [c1.from, c1.to].sort().join("<->");
+        if (!checkedFlowPairs.has(pairKey)) {
+          checkedFlowPairs.add(pairKey);
+          if (c1.label.toLowerCase() === c2.label.toLowerCase() || c1.label === "Data_Flow" || c2.label === "Data_Flow") {
+            const nodeA = dfdNodes.find(n => n.id === c1.from);
+            const nodeB = dfdNodes.find(n => n.id === c1.to);
+            sinsFound.push({
+              title: "Mortal Sin #10: Bidirectional Flow Anti-Pattern",
+              desc: `Bidirectional communication between [${nodeA ? nodeA.name : 'A'}] and [${nodeB ? nodeB.name : 'B'}] must have separate, unique unidirectional semantic labels (e.g. '1. Inquiry' and '2. Response'), not duplicate names.`
+            });
+          }
+        }
+      }
+    });
+  });
+
+  // Check Process Quantity (Miller's 7 +- 2 Rule)
+  const procCount = dfdNodes.filter(n => n.type === 'process').length;
+  if (procCount > 7) {
+    sinsFound.push({
+      title: "Decomposition Rule: Process Clutter (> 7 Processes)",
+      desc: `Diagram contains ${procCount} processes, exceeding Miller's 7 ± 2 Rule (3 to 7 processes recommended, never exceed 9). Decompose into child Level 1 diagrams to maintain readability.`
+    });
+  }
+
+  // Check External Entity Naming (Must be Noun phrase, not starting with action verbs)
+  dfdNodes.filter(n => n.type === 'entity').forEach(ent => {
+    const verbStarts = /^(compute|process|calculate|generate|update|record|verify|produce|validate|admit|check|evaluate|enroll|enrol)\b/i;
+    if (verbStarts.test(ent.name.trim())) {
+      sinsFound.push({
+        title: "Syntax Warning: External Entity Naming Convention",
+        desc: `External Entity [${ent.name}] starts with an action verb. External entities represent people, systems, or organizations outside the boundary and must be noun phrases (e.g. 'CUSTOMER', 'BANK HOST').`
+      });
+    }
+  });
+
+  // Check Data Flow Naming (Every flow must be a specific noun phrase)
+  dfdConnections.forEach(c => {
+    if (!c.label || c.label.trim() === "" || c.label.trim() === "Data_Flow") {
+      const fromNode = dfdNodes.find(n => n.id === c.from);
+      const toNode = dfdNodes.find(n => n.id === c.to);
+      sinsFound.push({
+        title: "Syntax Warning: Generic / Unlabeled Data Flow",
+        desc: `Flow from [${fromNode ? fromNode.name : 'Source'}] to [${toNode ? toNode.name : 'Target'}] is labeled '${c.label || 'empty'}'. Every DFD data flow must be a specific noun phrase naming the data packet.`
+      });
+    }
+  });
+
+  // Check Mortal Sin #6: Gray Hole Phenomenon (The H2O Principle)
+  dfdNodes.filter(n => n.type === 'process').forEach(proc => {
+    const ins = dfdConnections.filter(c => c.to === proc.id);
+    const outs = dfdConnections.filter(c => c.from === proc.id);
+    const isCalculation = /\b(compute|calculate|generate|reconcile)\b/i.test(proc.name);
+
+    if (isCalculation && ins.length === 1 && outs.length >= 1) {
+      const singleIn = ins[0];
+      const source = dfdNodes.find(n => n.id === singleIn.from);
+      if (source && source.type === 'entity') {
+        sinsFound.push({
+          title: "Mortal Sin #6: Gray Hole Phenomenon",
+          desc: `Process [${proc.name}] produces computed outputs with only input from [${source.name}]. Generating calculated totals or receipts requires reference inputs (e.g. Price Database or Tax Table) - The H2O Principle.`
+        });
+      }
     }
   });
 
