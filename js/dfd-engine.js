@@ -492,8 +492,6 @@ function endDraggingArrowEndpoint() {
     if (wasMoved) {
       justFinishedDragging = true;
       setTimeout(() => { justFinishedDragging = false; }, 100);
-      const node = dfdNodes.find(n => n.id === (isTarget ? c.to : c.from));
-      showToast(`Repositioned ${isTarget ? 'arrowhead' : 'arrow start'} on [${node ? node.name : 'element'}]`, 'info');
       auditDfdDiagram();
     }
   }
@@ -586,7 +584,6 @@ function endLabelDrag() {
     if (wasMoved) {
       justFinishedDragging = true;
       setTimeout(() => { justFinishedDragging = false; }, 100);
-      showToast(`Repositioned label: [${c.label}]`, 'info');
     }
   }
 }
@@ -828,8 +825,7 @@ function renderDfd() {
           return;
         }
         if (currentCanvasMode !== 'bend') {
-          // In select/move mode, clicking the wire inspects it and does NOT add bend points
-          showToast(`Flow [${c.label}]: Output from ${fromNode.name} -> Input to ${toNode.name}${c.desc ? ' (' + c.desc + ')' : ''}`, 'info');
+          // In select/move mode, clicking the wire does not create bend points or show popups
           return;
         }
 
@@ -870,8 +866,7 @@ function renderDfd() {
           return;
         }
         if (currentCanvasMode !== 'bend') {
-          // In select/move mode, tapping the wire inspects it and does NOT add bend points
-          showToast(`Flow [${c.label}]: Output from ${fromNode.name} -> Input to ${toNode.name}${c.desc ? ' (' + c.desc + ')' : ''}`, 'info');
+          // In select/move mode, tapping the wire does not create bend points or show popups
           return;
         }
 
@@ -1093,8 +1088,6 @@ function renderDfd() {
           showToast("Deleted Data Flow", "warning");
         } else if (currentCanvasMode === 'edit') {
           openEditFlowModal(c);
-        } else {
-          showToast(`Flow [${c.label}]: Output from ${fromNode.name} \u2192 Input to ${toNode.name}${c.desc ? ' (' + c.desc + ')' : ''}`, 'info');
         }
       });
 
@@ -1678,7 +1671,7 @@ function onNodeClick(e, node) {
       }
     }
   } else if (currentCanvasMode === 'move') {
-    showToast(`[${node.name}]${node.desc ? ': ' + node.desc : ''}`, 'info');
+    // In move mode, clicking elements does not show popup toasts
   }
 }
 
@@ -2047,6 +2040,11 @@ function closeAppModal() {
 function showToast(message, type = "info") {
   const container = document.getElementById('toast-container');
   if (!container) return;
+
+  // Prevent toast buildup / stacking across the screen
+  while (container.children.length >= 2) {
+    container.removeChild(container.firstChild);
+  }
 
   const iconSvg = {
     success: `<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="#22c55e"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`,
