@@ -647,6 +647,18 @@ textarea.essay-input:focus {
   cursor: crosshair;
 }
 
+/* Bend Wire Mode (Mobile-Optimized Touch Hitbox & Visual Highlight) */
+#dfd-svg[data-mode="bend"] .wire-hitbox {
+  stroke-width: 44px !important;
+  stroke: rgba(29, 78, 216, 0.16) !important;
+  cursor: copy !important;
+}
+
+#dfd-svg[data-mode="bend"] .data-flow-path {
+  stroke-width: 3.5px !important;
+  filter: drop-shadow(0 0 4px rgba(29, 78, 216, 0.45));
+}
+
 /* Arduino-Style Wire Bending & Waypoints */
 .wire-hitbox {
   cursor: crosshair;
@@ -663,7 +675,7 @@ textarea.essay-input:focus {
   transition: r 0.15s ease, stroke-width 0.15s ease, filter 0.15s ease;
 }
 
-.waypoint-handle:hover {
+.waypoint-group:hover .waypoint-handle {
   r: 8px !important;
   stroke: #0284c7 !important;
   stroke-width: 3px !important;
@@ -674,8 +686,38 @@ textarea.essay-input:focus {
   cursor: not-allowed;
 }
 
-#dfd-svg[data-mode="delete"] .waypoint-handle:hover {
+#dfd-svg[data-mode="delete"] .waypoint-group:hover .waypoint-handle {
   stroke: var(--danger) !important;
+}
+
+/* Arrowhead & Endpoint Position Handles */
+.arrowhead-handle {
+  cursor: grab;
+  transition: r 0.15s ease, stroke-width 0.15s ease, filter 0.15s ease;
+}
+
+.arrowhead-handle-group:hover .arrowhead-handle {
+  r: 7.5px !important;
+  stroke-width: 3px !important;
+  stroke: #1d4ed8 !important;
+  filter: drop-shadow(0 2px 6px rgba(29, 78, 216, 0.5));
+}
+
+/* Data Flow Label Dragging */
+.data-flow-label-group {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.data-flow-label-group:hover rect {
+  stroke-width: 2.2px !important;
+  stroke: #1d4ed8 !important;
+  filter: drop-shadow(0 2px 6px rgba(29, 78, 216, 0.22));
+}
+
+.data-flow-label-group:active {
+  cursor: grabbing;
 }
 
 .dfd-audit-panel {
@@ -1257,13 +1299,18 @@ textarea.essay-input:focus {
     overflow-x: auto;
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
-    gap: 4px;
+    gap: 6px;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .canvas-mode-group::-webkit-scrollbar {
+    display: none;
   }
   .canvas-mode-btn {
-    flex: 1;
+    flex-shrink: 0;
     text-align: center;
-    padding: 6px 6px;
-    font-size: 0.7rem;
+    padding: 6px 10px;
+    font-size: 0.72rem;
     white-space: nowrap;
   }
   .canvas-svg-board {

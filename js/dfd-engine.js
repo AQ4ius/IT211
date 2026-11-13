@@ -1,4 +1,4 @@
-﻿/**
+/**
  * IT 211 RAM • Interactive DFD Canvas Engine & Mortal Sin Linter
  * Enhanced with Custom UI Modal, Toast Notifications, and Precise Arrow Geometries
  */
@@ -19,6 +19,9 @@ let canvasPan = { x: 0, y: 0 };
 let isPanningCanvas = false;
 let panStart = { clientX: 0, clientY: 0, panX: 0, panY: 0 };
 let draggedWaypoint = null;
+let draggedArrowEndpoint = null;
+let draggedLabel = null;
+let justFinishedDragging = false;
 let currentEditingFlow = null;
 
 const SCENARIOS = {
@@ -119,6 +122,49 @@ function getPolylineMidpoint(points) {
     x: (points[0].x + points[points.length - 1].x) / 2,
     y: (points[0].y + points[points.length - 1].y) / 2
   };
+}
+
+/* Find closest point on rectangle perimeter with cardinal magnetic snapping */
+function getClosestPointOnRectPerimeter(pt, rx, ry, rw, rh) {
+  const clampX = Math.max(rx, Math.min(rx + rw, pt.x));
+  const clampY = Math.max(ry, Math.min(ry + rh, pt.y));
+
+  const dTop = Math.abs(pt.y - ry);
+  const dBottom = Math.abs(pt.y - (ry + rh));
+  const dLeft = Math.abs(pt.x - rx);
+  const dRight = Math.abs(pt.x - (rx + rw));
+
+  const minDist = Math.min(dTop, dBottom, dLeft, dRight);
+  let bestX = clampX;
+  let bestY = clampY;
+
+  if (minDist === dTop) {
+    bestY = ry;
+  } else if (minDist === dBottom) {
+    bestY = ry + rh;
+  } else if (minDist === dLeft) {
+    bestX = rx;
+  } else {
+    bestX = rx + rw;
+  }
+
+  // Snap to 25%, 50%, 75% cardinal points if close (within 14px)
+  const centerX = rx + rw / 2;
+  const centerY = ry + rh / 2;
+  if (bestY === ry || bestY === ry + rh) {
+    if (Math.abs(bestX - centerX) < 14) bestX = centerX;
+    else if (Math.abs(bestX - (rx + rw * 0.25)) < 10) bestX = rx + rw * 0.25;
+    else if (Math.abs(bestX - (rx + rw * 0.75)) < 10) bestX = rx + rw * 0.75;
+  }
+  if (bestX === rx || bestX === rx + rw) {
+    if (Math.abs(bestY - centerY) < 14) bestY = centerY;
+    else if (Math.abs(bestY - (ry + rh * 0.25)) < 10) bestY = ry + rh * 0.25;
+    else if (Math.abs(bestY - (ry + rh * 0.75)) < 10) bestY = ry + rh * 0.75;
+  }
+
+  const relX = Math.max(0, Math.min(1, Math.round(((bestX - rx) / rw) * 1000) / 1000));
+  const relY = Math.max(0, Math.min(1, Math.round(((bestY - ry) / rh) * 1000) / 1000));
+  return { relX, relY, x: Math.round(bestX), y: Math.round(bestY) };
 }
 
 /* Waypoint Drag Handlers (Arduino-style wire bend points) */
@@ -234,6 +280,217 @@ function straightenCurrentFlow() {
   }
 }
 
+function addBendPointToCurrentFlow() {
+  if (!currentEditingFlow) return;
+  const c = currentEditingFlow;
+  c.waypoints = c.waypoints || [];
+  const fromNode = dfdNodes.find(n => n.id === c.from);
+  const toNode = dfdNodes.find(n => n.id === c.to);
+  if (!fromNode || !toNode) return;
+  const fromCenter = getNodeCenter(fromNode);
+  const toCenter = getNodeCenter(toNode);
+  const midX = Math.round((fromCenter.x + toCenter.x) / 2);
+  const midY = Math.round((fromCenter.y + toCenter.y) / 2);
+  c.waypoints.push({ x: midX, y: midY });
+  closeAppModal();
+  renderDfd();
+  showToast("Added bend point at center! Drag point to route wire.", "success");
+}
+
+function resetCurrentFlowLabel() {
+  if (!currentEditingFlow) return;
+  currentEditingFlow.labelOffset = { x: 0, y: 0 };
+  closeAppModal();
+  renderDfd();
+  showToast("Reset label position to center", "info");
+}
+
+function resetCurrentFlowAnchors() {
+  if (!currentEditingFlow) return;
+  currentEditingFlow.targetAnchor = null;
+  currentEditingFlow.sourceAnchor = null;
+  closeAppModal();
+  renderDfd();
+  showToast("Reset arrowhead and connection points to auto", "info");
+}
+
+/* ========================================================
+   ARROWHEAD & ENDPOINT DRAG HANDLERS
+   ======================================================== */
+function startDraggingArrowEndpoint(e, connection, type) {
+  e.preventDefault();
+  e.stopPropagation();
+  draggedArrowEndpoint = { connection, type, moved: false };
+  window.addEventListener('mousemove', onArrowEndpointMouseMove);
+  window.addEventListener('mouseup', onArrowEndpointMouseUp);
+}
+
+function startDraggingArrowEndpointTouch(e, connection, type) {
+  if (e.touches && e.touches.length > 1) return;
+  if (e.cancelable) e.preventDefault();
+  e.stopPropagation();
+  draggedArrowEndpoint = { connection, type, moved: false };
+  window.addEventListener('touchmove', onArrowEndpointTouchMove, { passive: false });
+  window.addEventListener('touchend', onArrowEndpointTouchEnd);
+  window.addEventListener('touchcancel', onArrowEndpointTouchEnd);
+}
+
+function onArrowEndpointMouseMove(e) {
+  if (!draggedArrowEndpoint) return;
+  draggedArrowEndpoint.moved = true;
+  updateArrowEndpoint(e.clientX, e.clientY);
+}
+
+function onArrowEndpointTouchMove(e) {
+  if (!draggedArrowEndpoint || !e.touches || e.touches.length === 0) return;
+  if (e.cancelable) e.preventDefault();
+  draggedArrowEndpoint.moved = true;
+  updateArrowEndpoint(e.touches[0].clientX, e.touches[0].clientY);
+}
+
+function updateArrowEndpoint(clientX, clientY) {
+  if (!draggedArrowEndpoint) return;
+  const svg = document.getElementById('dfd-svg');
+  const svgPt = getSvgCoords(svg, clientX, clientY);
+  const c = draggedArrowEndpoint.connection;
+  const isTarget = draggedArrowEndpoint.type === 'target';
+  const nodeId = isTarget ? c.to : c.from;
+  const node = dfdNodes.find(n => n.id === nodeId);
+  if (!node) return;
+
+  const dims = getNodeDims(node);
+  const closest = getClosestPointOnRectPerimeter(svgPt, node.x, node.y, dims.w, dims.h);
+
+  if (isTarget) {
+    c.targetAnchor = { relX: closest.relX, relY: closest.relY };
+  } else {
+    c.sourceAnchor = { relX: closest.relX, relY: closest.relY };
+  }
+  renderDfd();
+}
+
+function onArrowEndpointMouseUp() {
+  endDraggingArrowEndpoint();
+}
+
+function onArrowEndpointTouchEnd() {
+  endDraggingArrowEndpoint();
+}
+
+function endDraggingArrowEndpoint() {
+  if (draggedArrowEndpoint) {
+    const isTarget = draggedArrowEndpoint.type === 'target';
+    const c = draggedArrowEndpoint.connection;
+    const wasMoved = draggedArrowEndpoint.moved;
+    draggedArrowEndpoint = null;
+    window.removeEventListener('mousemove', onArrowEndpointMouseMove);
+    window.removeEventListener('mouseup', onArrowEndpointMouseUp);
+    window.removeEventListener('touchmove', onArrowEndpointTouchMove);
+    window.removeEventListener('touchend', onArrowEndpointTouchEnd);
+    window.removeEventListener('touchcancel', onArrowEndpointTouchEnd);
+
+    if (wasMoved) {
+      justFinishedDragging = true;
+      setTimeout(() => { justFinishedDragging = false; }, 100);
+      const node = dfdNodes.find(n => n.id === (isTarget ? c.to : c.from));
+      showToast(`Repositioned ${isTarget ? 'arrowhead' : 'arrow start'} on [${node ? node.name : 'element'}]`, 'info');
+      auditDfdDiagram();
+    }
+  }
+}
+
+/* ========================================================
+   DATA FLOW LABEL DRAG HANDLERS
+   ======================================================== */
+function startDraggingLabel(e, connection) {
+  if (currentCanvasMode === 'delete') return;
+  e.preventDefault();
+  e.stopPropagation();
+  const svg = document.getElementById('dfd-svg');
+  const svgPt = getSvgCoords(svg, e.clientX, e.clientY);
+  draggedLabel = {
+    connection,
+    startSvg: svgPt,
+    origOffset: { ...(connection.labelOffset || { x: 0, y: 0 }) },
+    moved: false
+  };
+  window.addEventListener('mousemove', onLabelMouseMove);
+  window.addEventListener('mouseup', onLabelMouseUp);
+}
+
+function startDraggingLabelTouch(e, connection) {
+  if (currentCanvasMode === 'delete') return;
+  if (e.touches && e.touches.length > 1) return;
+  if (e.cancelable) e.preventDefault();
+  e.stopPropagation();
+  const touch = e.touches[0];
+  const svg = document.getElementById('dfd-svg');
+  const svgPt = getSvgCoords(svg, touch.clientX, touch.clientY);
+  draggedLabel = {
+    connection,
+    startSvg: svgPt,
+    origOffset: { ...(connection.labelOffset || { x: 0, y: 0 }) },
+    moved: false
+  };
+  window.addEventListener('touchmove', onLabelTouchMove, { passive: false });
+  window.addEventListener('touchend', onLabelTouchEnd);
+  window.addEventListener('touchcancel', onLabelTouchEnd);
+}
+
+function onLabelMouseMove(e) {
+  if (!draggedLabel) return;
+  updateLabelDrag(e.clientX, e.clientY);
+}
+
+function onLabelTouchMove(e) {
+  if (!draggedLabel || !e.touches || e.touches.length === 0) return;
+  if (e.cancelable) e.preventDefault();
+  updateLabelDrag(e.touches[0].clientX, e.touches[0].clientY);
+}
+
+function updateLabelDrag(clientX, clientY) {
+  if (!draggedLabel) return;
+  const svg = document.getElementById('dfd-svg');
+  const svgPt = getSvgCoords(svg, clientX, clientY);
+  const dx = svgPt.x - draggedLabel.startSvg.x;
+  const dy = svgPt.y - draggedLabel.startSvg.y;
+  if (Math.hypot(dx, dy) > 3) {
+    draggedLabel.moved = true;
+  }
+  draggedLabel.connection.labelOffset = {
+    x: Math.round(draggedLabel.origOffset.x + dx),
+    y: Math.round(draggedLabel.origOffset.y + dy)
+  };
+  renderDfd();
+}
+
+function onLabelMouseUp() {
+  endLabelDrag();
+}
+
+function onLabelTouchEnd() {
+  endLabelDrag();
+}
+
+function endLabelDrag() {
+  if (draggedLabel) {
+    const wasMoved = draggedLabel.moved;
+    const c = draggedLabel.connection;
+    draggedLabel = null;
+    window.removeEventListener('mousemove', onLabelMouseMove);
+    window.removeEventListener('mouseup', onLabelMouseUp);
+    window.removeEventListener('touchmove', onLabelTouchMove);
+    window.removeEventListener('touchend', onLabelTouchEnd);
+    window.removeEventListener('touchcancel', onLabelTouchEnd);
+
+    if (wasMoved) {
+      justFinishedDragging = true;
+      setTimeout(() => { justFinishedDragging = false; }, 100);
+      showToast(`Repositioned label: [${c.label}]`, 'info');
+    }
+  }
+}
+
 /* ========================================================
    CANVAS ACTIONS & PRESETS
    ======================================================== */
@@ -254,8 +511,9 @@ function setCanvasMode(mode) {
   if (svg) svg.setAttribute('data-mode', mode);
 
   const statusMap = {
-    move: "Mode: Select & Drag Elements (Double-click any element or flow to edit/rename)",
+    move: "Mode: Select & Drag Elements (Drag arrowheads, bend points, or labels)",
     connect: "Mode: Click SOURCE element (Output), then click TARGET element (Input)",
+    bend: "Mode: Tap any wire to add bend points (Arduino wiring)",
     edit: "Mode: Click any Process, Entity, Data Store, or Flow arrow to edit / rename",
     delete: "Mode: Click any element or flow to delete"
   };
@@ -368,19 +626,34 @@ function renderDfd() {
     // Compute perimeter intersections & waypoints
     let startPt, endPt;
     c.waypoints = c.waypoints || [];
+    c.labelOffset = c.labelOffset || { x: 0, y: 0 };
 
     if (c.from === c.to) {
       // Recursive loop
       startPt = { x: fromNode.x + fromDims.w, y: fromNode.y + 15 };
       endPt = { x: fromNode.x + fromDims.w, y: fromNode.y + fromDims.h - 15 };
-    } else if (c.waypoints.length === 0) {
-      startPt = getRectIntersection(fromCenter.x, fromCenter.y, fromDims.w, fromDims.h, toCenter.x, toCenter.y);
-      endPt = getRectIntersection(toCenter.x, toCenter.y, toDims.w, toDims.h, fromCenter.x, fromCenter.y);
     } else {
-      const firstWp = c.waypoints[0];
-      const lastWp = c.waypoints[c.waypoints.length - 1];
-      startPt = getRectIntersection(fromCenter.x, fromCenter.y, fromDims.w, fromDims.h, firstWp.x, firstWp.y);
-      endPt = getRectIntersection(toCenter.x, toCenter.y, toDims.w, toDims.h, lastWp.x, lastWp.y);
+      // 1. Calculate endPt (Arrowhead entry point on target)
+      if (c.targetAnchor) {
+        endPt = {
+          x: Math.round(toNode.x + toDims.w * c.targetAnchor.relX),
+          y: Math.round(toNode.y + toDims.h * c.targetAnchor.relY)
+        };
+      } else {
+        const refPt = c.waypoints.length > 0 ? c.waypoints[c.waypoints.length - 1] : fromCenter;
+        endPt = getRectIntersection(toCenter.x, toCenter.y, toDims.w, toDims.h, refPt.x, refPt.y);
+      }
+
+      // 2. Calculate startPt (Arrow start point on source)
+      if (c.sourceAnchor) {
+        startPt = {
+          x: Math.round(fromNode.x + fromDims.w * c.sourceAnchor.relX),
+          y: Math.round(fromNode.y + fromDims.h * c.sourceAnchor.relY)
+        };
+      } else {
+        const refPt = c.waypoints.length > 0 ? c.waypoints[0] : endPt;
+        startPt = getRectIntersection(fromCenter.x, fromCenter.y, fromDims.w, fromDims.h, refPt.x, refPt.y);
+      }
     }
 
     const allPoints = (c.from === c.to) ? [startPt, endPt] : [startPt, ...c.waypoints, endPt];
@@ -422,7 +695,7 @@ function renderDfd() {
       hitbox.setAttribute("d", pathD);
       hitbox.setAttribute("fill", "none");
       hitbox.setAttribute("stroke", "transparent");
-      hitbox.setAttribute("stroke-width", "16");
+      hitbox.setAttribute("stroke-width", currentCanvasMode === 'bend' ? "44" : "20");
       hitbox.setAttribute("stroke-linecap", "round");
       hitbox.setAttribute("stroke-linejoin", "round");
       hitbox.setAttribute("class", "wire-hitbox");
@@ -474,7 +747,7 @@ function renderDfd() {
         c.waypoints.splice(bestIdx, 0, newWp);
         renderDfd();
         startDraggingWaypoint(e, c, bestIdx);
-        showToast("Added bend point. Drag to position wire.", "info");
+        showToast("Added bend point! Drag to route wire.", "info");
       });
 
       hitbox.addEventListener('touchstart', (e) => {
@@ -511,11 +784,21 @@ function renderDfd() {
         c.waypoints.splice(bestIdx, 0, newWp);
         renderDfd();
         startDraggingWaypointTouch(e, c, bestIdx);
-        showToast("Added bend point. Drag to position wire.", "info");
+        showToast("Added bend point! Drag to route wire.", "info");
       }, { passive: false });
 
-      // 3. Waypoint draggable circular handles
+      // 3. Waypoint draggable circular handles (with mobile-friendly 36px touch zone)
       c.waypoints.forEach((wp, wpIdx) => {
+        const wpGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        wpGroup.setAttribute("class", "waypoint-group");
+
+        const touchTarget = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        touchTarget.setAttribute("cx", wp.x);
+        touchTarget.setAttribute("cy", wp.y);
+        touchTarget.setAttribute("r", "18");
+        touchTarget.setAttribute("fill", "transparent");
+        touchTarget.setAttribute("style", "cursor: move; touch-action: none;");
+
         const handle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         handle.setAttribute("cx", wp.x);
         handle.setAttribute("cy", wp.y);
@@ -524,12 +807,15 @@ function renderDfd() {
         handle.setAttribute("stroke", strokeColor);
         handle.setAttribute("stroke-width", "2.2");
         handle.setAttribute("class", "waypoint-handle");
+        handle.setAttribute("style", "pointer-events: none;");
 
         const hTitle = document.createElementNS("http://www.w3.org/2000/svg", "title");
         hTitle.textContent = "Bend point (Waypoint)\n• Drag to bend wire\n• Double-click or Right-click to remove";
-        handle.appendChild(hTitle);
+        wpGroup.appendChild(hTitle);
+        wpGroup.appendChild(touchTarget);
+        wpGroup.appendChild(handle);
 
-        handle.addEventListener('mousedown', (e) => {
+        touchTarget.addEventListener('mousedown', (e) => {
           e.stopPropagation();
           if (currentCanvasMode === 'delete') {
             c.waypoints.splice(wpIdx, 1);
@@ -540,7 +826,7 @@ function renderDfd() {
           startDraggingWaypoint(e, c, wpIdx);
         });
 
-        handle.addEventListener('touchstart', (e) => {
+        touchTarget.addEventListener('touchstart', (e) => {
           e.stopPropagation();
           if (e.cancelable) e.preventDefault();
           if (currentCanvasMode === 'delete') {
@@ -552,14 +838,14 @@ function renderDfd() {
           startDraggingWaypointTouch(e, c, wpIdx);
         }, { passive: false });
 
-        handle.addEventListener('dblclick', (e) => {
+        touchTarget.addEventListener('dblclick', (e) => {
           e.stopPropagation();
           c.waypoints.splice(wpIdx, 1);
           renderDfd();
           showToast("Removed bend point", "warning");
         });
 
-        handle.addEventListener('contextmenu', (e) => {
+        touchTarget.addEventListener('contextmenu', (e) => {
           e.preventDefault();
           e.stopPropagation();
           c.waypoints.splice(wpIdx, 1);
@@ -567,21 +853,94 @@ function renderDfd() {
           showToast("Removed bend point", "warning");
         });
 
-        flowGroup.appendChild(handle);
+        flowGroup.appendChild(wpGroup);
       });
 
-      // 4. Label placed at midpoint along full polyline path
+      // 3b. Interactive Arrowhead Drag Handle (Anchor on Node Perimeter)
+      if (c.from !== c.to) {
+        const arrHandleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        arrHandleGroup.setAttribute("class", "arrowhead-handle-group");
+
+        const arrTouchTarget = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        arrTouchTarget.setAttribute("cx", endPt.x);
+        arrTouchTarget.setAttribute("cy", endPt.y);
+        arrTouchTarget.setAttribute("r", "18");
+        arrTouchTarget.setAttribute("fill", "transparent");
+        arrTouchTarget.setAttribute("style", "cursor: grab; touch-action: none;");
+
+        const arrVisibleHandle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        arrVisibleHandle.setAttribute("cx", endPt.x);
+        arrVisibleHandle.setAttribute("cy", endPt.y);
+        arrVisibleHandle.setAttribute("r", "5.5");
+        arrVisibleHandle.setAttribute("fill", "#ffffff");
+        arrVisibleHandle.setAttribute("stroke", strokeColor);
+        arrVisibleHandle.setAttribute("stroke-width", "2.2");
+        arrVisibleHandle.setAttribute("class", "arrowhead-handle");
+        arrVisibleHandle.setAttribute("style", "pointer-events: none;");
+
+        const arrTitle = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        arrTitle.textContent = "Arrowhead Anchor\n• Drag along border to reposition where arrow enters\n• Double-click to reset to auto";
+        arrHandleGroup.appendChild(arrTitle);
+        arrHandleGroup.appendChild(arrTouchTarget);
+        arrHandleGroup.appendChild(arrVisibleHandle);
+
+        arrTouchTarget.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+          startDraggingArrowEndpoint(e, c, 'target');
+        });
+
+        arrTouchTarget.addEventListener('touchstart', (e) => {
+          e.stopPropagation();
+          startDraggingArrowEndpointTouch(e, c, 'target');
+        }, { passive: false });
+
+        arrTouchTarget.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          c.targetAnchor = null;
+          renderDfd();
+          showToast("Reset arrowhead to auto position", "info");
+        });
+
+        arrTouchTarget.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          c.targetAnchor = null;
+          renderDfd();
+          showToast("Reset arrowhead to auto position", "info");
+        });
+
+        flowGroup.appendChild(arrHandleGroup);
+      }
+
+      // 4. Label placed at midpoint along full polyline path (Draggable anywhere)
       const mid = getPolylineMidpoint(allPoints);
       const labelText = c.label || "Data_Flow";
       const pillWidth = Math.max(70, labelText.length * 7 + 24);
+      const labelX = mid.x + (c.labelOffset ? c.labelOffset.x : 0);
+      const labelY = mid.y + (c.labelOffset ? c.labelOffset.y : 0);
+
+      // Leader line if label is moved away from wire center
+      if (c.labelOffset && (Math.abs(c.labelOffset.x) > 10 || Math.abs(c.labelOffset.y) > 10)) {
+        const leaderLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        leaderLine.setAttribute("x1", mid.x);
+        leaderLine.setAttribute("y1", mid.y);
+        leaderLine.setAttribute("x2", labelX);
+        leaderLine.setAttribute("y2", labelY);
+        leaderLine.setAttribute("stroke", "#94a3b8");
+        leaderLine.setAttribute("stroke-width", "1.2");
+        leaderLine.setAttribute("stroke-dasharray", "3,3");
+        leaderLine.setAttribute("opacity", "0.7");
+        leaderLine.setAttribute("style", "pointer-events: none;");
+        flowGroup.appendChild(leaderLine);
+      }
 
       const labelGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
       labelGroup.setAttribute("class", "data-flow-label-group");
-      labelGroup.setAttribute("style", "cursor: pointer;");
+      labelGroup.setAttribute("style", "cursor: grab; touch-action: none;");
 
       const pillRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      pillRect.setAttribute("x", mid.x - pillWidth / 2);
-      pillRect.setAttribute("y", mid.y - 10);
+      pillRect.setAttribute("x", labelX - pillWidth / 2);
+      pillRect.setAttribute("y", labelY - 10);
       pillRect.setAttribute("width", pillWidth);
       pillRect.setAttribute("height", "20");
       pillRect.setAttribute("rx", "10");
@@ -592,17 +951,31 @@ function renderDfd() {
       labelGroup.appendChild(pillRect);
 
       const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      text.setAttribute("x", mid.x);
-      text.setAttribute("y", mid.y + 3.5);
+      text.setAttribute("x", labelX);
+      text.setAttribute("y", labelY + 3.5);
       text.setAttribute("fill", isError ? "#991b1b" : "#1e40af");
       text.setAttribute("font-size", "9");
       text.setAttribute("font-weight", "800");
       text.setAttribute("text-anchor", "middle");
+      text.setAttribute("style", "pointer-events: none;");
       text.textContent = `${labelText} \u2192`;
       labelGroup.appendChild(text);
 
+      const lblTitle = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      lblTitle.textContent = `Flow: ${c.label}\n• Drag label to reposition anywhere\n• Click to inspect • Double-click to edit`;
+      labelGroup.appendChild(lblTitle);
+
+      labelGroup.addEventListener('mousedown', (e) => {
+        startDraggingLabel(e, c);
+      });
+
+      labelGroup.addEventListener('touchstart', (e) => {
+        startDraggingLabelTouch(e, c);
+      }, { passive: false });
+
       labelGroup.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (justFinishedDragging) return;
         if (currentCanvasMode === 'delete') {
           dfdConnections = dfdConnections.filter(item => item.id !== c.id);
           renderDfd();
@@ -1351,18 +1724,44 @@ function openEditFlowModal(c) {
   if (chipsHeader) chipsHeader.innerText = "Quick Suggestions for Data Flow:";
 
   if (extraBox) {
+    extraBox.style.display = 'block';
+    let btnsHtml = `
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <button type="button" class="btn btn-outline" style="width: 100%; font-size: 0.76rem;" onclick="addBendPointToCurrentFlow()">
+          <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><path d="M4 4v7a4 4 0 0 0 4 4h8"/><polyline points="13 11 17 15 13 19"/><circle cx="11" cy="15" r="2.5" fill="currentColor"/></svg>
+          Add Bend Point (at Center)
+        </button>
+    `;
+
     if (c.waypoints && c.waypoints.length > 0) {
-      extraBox.style.display = 'block';
-      extraBox.innerHTML = `
+      btnsHtml += `
         <button type="button" class="btn btn-outline" style="width: 100%; font-size: 0.76rem;" onclick="straightenCurrentFlow()">
           <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           Straighten Arrow (Remove All ${c.waypoints.length} Bend Point${c.waypoints.length > 1 ? 's' : ''})
         </button>
       `;
-    } else {
-      extraBox.style.display = 'none';
-      extraBox.innerHTML = '';
     }
+
+    if (c.labelOffset && (c.labelOffset.x !== 0 || c.labelOffset.y !== 0)) {
+      btnsHtml += `
+        <button type="button" class="btn btn-outline" style="width: 100%; font-size: 0.76rem;" onclick="resetCurrentFlowLabel()">
+          <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Reset Label Position to Center
+        </button>
+      `;
+    }
+
+    if (c.targetAnchor || c.sourceAnchor) {
+      btnsHtml += `
+        <button type="button" class="btn btn-outline" style="width: 100%; font-size: 0.76rem;" onclick="resetCurrentFlowAnchors()">
+          <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Reset Arrowhead to Auto Position
+        </button>
+      `;
+    }
+
+    btnsHtml += `</div>`;
+    extraBox.innerHTML = btnsHtml;
   }
 
   const suggestions = [

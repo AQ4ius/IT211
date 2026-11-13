@@ -241,6 +241,10 @@
               <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
               Connect Flow (Arrow)
             </button>
+            <button class="canvas-mode-btn" id="btn-mode-bend" onclick="setCanvasMode('bend')">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><path d="M4 4v7a4 4 0 0 0 4 4h8"/><polyline points="13 11 17 15 13 19"/><circle cx="11" cy="15" r="2.5" fill="currentColor"/></svg>
+              Add Bend Point
+            </button>
             <button class="canvas-mode-btn" id="btn-mode-edit" onclick="setCanvasMode('edit')">
               <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Edit / Rename
@@ -292,7 +296,7 @@
         <div class="flow-legend">
           <span><div class="dot-blue"></div> Valid Flow: <strong>Output &rarr; Input</strong></span>
           <span><div class="dot-red"></div> Mortal Sin Flow</span>
-          <span style="margin-left: auto;"><em>Click arrow to add bend points (Arduino wiring) &bull; Drag points to route &bull; Double-click point to remove</em></span>
+          <span style="margin-left: auto;"><em>Drag labels to move &bull; Drag arrowhead ring along element border &bull; Toggle "Add Bend Point" to route wires</em></span>
         </div>
       </div>
 
