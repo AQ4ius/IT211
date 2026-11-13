@@ -230,7 +230,7 @@
         <div class="flow-legend">
           <span><div class="dot-blue"></div> Valid Flow: <strong>Output ➔ Input</strong></span>
           <span><div class="dot-red"></div> Mortal Sin Flow</span>
-          <span style="margin-left: auto;">💡 <em>Mouse wheel: Zoom • Drag empty canvas: Pan • Double-click: Edit element</em></span>
+          <span style="margin-left: auto;">💡 <em>Click arrow to add bend points (Arduino wiring) • Drag points to route • Double-click point to remove</em></span>
         </div>
       </div>
 
@@ -379,6 +379,8 @@
       </div>
 
       <p id="modal-desc" class="modal-help-text"></p>
+
+      <div id="modal-extra-actions" style="margin-top: 10px; margin-bottom: 10px; display: none;"></div>
 
       <div class="modal-footer">
         <button class="btn btn-outline" type="button" onclick="closeAppModal()">Cancel</button>

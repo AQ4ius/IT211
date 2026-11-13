@@ -18,6 +18,8 @@ let canvasZoom = 1.0;
 let canvasPan = { x: 0, y: 0 };
 let isPanningCanvas = false;
 let panStart = { clientX: 0, clientY: 0, panX: 0, panY: 0 };
+let draggedWaypoint = null;
+let currentEditingFlow = null;
 
 const SCENARIOS = {
   pos: {
@@ -69,6 +71,167 @@ function getRectIntersection(cx, cy, w, h, fromX, fromY) {
     edgeX = cx + (edgeY - cy) / slope;
   }
   return { x: edgeX, y: edgeY };
+}
+
+/* Calculate distance from point p to line segment (v, w) */
+function distToSegment(p, v, w) {
+  const l2 = (v.x - w.x) ** 2 + (v.y - w.y) ** 2;
+  if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+  let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+}
+
+/* Calculate midpoint along a multi-segment polyline path */
+function getPolylineMidpoint(points) {
+  if (!points || points.length === 0) return { x: 0, y: 0 };
+  if (points.length === 1) return { x: points[0].x, y: points[0].y };
+  if (points.length === 2) {
+    return {
+      x: (points[0].x + points[1].x) / 2,
+      y: (points[0].y + points[1].y) / 2
+    };
+  }
+
+  let totalLen = 0;
+  const lens = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const d = Math.hypot(points[i + 1].x - points[i].x, points[i + 1].y - points[i].y);
+    lens.push(d);
+    totalLen += d;
+  }
+
+  const half = totalLen / 2;
+  let accum = 0;
+  for (let i = 0; i < lens.length; i++) {
+    if (accum + lens[i] >= half) {
+      const segLen = lens[i];
+      const t = segLen === 0 ? 0 : (half - accum) / segLen;
+      return {
+        x: points[i].x + t * (points[i + 1].x - points[i].x),
+        y: points[i].y + t * (points[i + 1].y - points[i].y)
+      };
+    }
+    accum += lens[i];
+  }
+
+  return {
+    x: (points[0].x + points[points.length - 1].x) / 2,
+    y: (points[0].y + points[points.length - 1].y) / 2
+  };
+}
+
+/* Waypoint Drag Handlers (Arduino-style wire bend points) */
+function startDraggingWaypoint(e, connection, index) {
+  e.preventDefault();
+  e.stopPropagation();
+  draggedWaypoint = { connection, index };
+  window.addEventListener('mousemove', onWaypointMouseMove);
+  window.addEventListener('mouseup', onWaypointMouseUp);
+}
+
+function onWaypointMouseMove(e) {
+  if (!draggedWaypoint) return;
+  const svg = document.getElementById('dfd-svg');
+  const svgPt = getSvgCoords(svg, e.clientX, e.clientY);
+  const wp = draggedWaypoint.connection.waypoints[draggedWaypoint.index];
+  if (wp) {
+    let targetX = Math.round(svgPt.x);
+    let targetY = Math.round(svgPt.y);
+
+    // Subtle orthogonal snapping (Tinkercad-style alignment)
+    const prevPt = (draggedWaypoint.index === 0) 
+      ? getNodeCenter(dfdNodes.find(n => n.id === draggedWaypoint.connection.from) || { x: targetX, y: targetY })
+      : draggedWaypoint.connection.waypoints[draggedWaypoint.index - 1];
+
+    const nextPt = (draggedWaypoint.index === draggedWaypoint.connection.waypoints.length - 1)
+      ? getNodeCenter(dfdNodes.find(n => n.id === draggedWaypoint.connection.to) || { x: targetX, y: targetY })
+      : draggedWaypoint.connection.waypoints[draggedWaypoint.index + 1];
+
+    if (prevPt) {
+      if (Math.abs(targetX - prevPt.x) < 9) targetX = prevPt.x;
+      if (Math.abs(targetY - prevPt.y) < 9) targetY = prevPt.y;
+    }
+    if (nextPt) {
+      if (Math.abs(targetX - nextPt.x) < 9) targetX = nextPt.x;
+      if (Math.abs(targetY - nextPt.y) < 9) targetY = nextPt.y;
+    }
+
+    wp.x = targetX;
+    wp.y = targetY;
+    renderDfd();
+  }
+}
+
+function onWaypointMouseUp() {
+  if (draggedWaypoint) {
+    draggedWaypoint = null;
+    window.removeEventListener('mousemove', onWaypointMouseMove);
+    window.removeEventListener('mouseup', onWaypointMouseUp);
+    auditDfdDiagram();
+  }
+}
+
+function startDraggingWaypointTouch(e, connection, index) {
+  e.preventDefault();
+  e.stopPropagation();
+  draggedWaypoint = { connection, index };
+  window.addEventListener('touchmove', onWaypointTouchMove, { passive: false });
+  window.addEventListener('touchend', onWaypointTouchEnd);
+  window.addEventListener('touchcancel', onWaypointTouchEnd);
+}
+
+function onWaypointTouchMove(e) {
+  if (!draggedWaypoint || !e.touches || e.touches.length === 0) return;
+  if (e.cancelable) e.preventDefault();
+  const svg = document.getElementById('dfd-svg');
+  const touch = e.touches[0];
+  const svgPt = getSvgCoords(svg, touch.clientX, touch.clientY);
+  const wp = draggedWaypoint.connection.waypoints[draggedWaypoint.index];
+  if (wp) {
+    let targetX = Math.round(svgPt.x);
+    let targetY = Math.round(svgPt.y);
+
+    const prevPt = (draggedWaypoint.index === 0) 
+      ? getNodeCenter(dfdNodes.find(n => n.id === draggedWaypoint.connection.from) || { x: targetX, y: targetY })
+      : draggedWaypoint.connection.waypoints[draggedWaypoint.index - 1];
+
+    const nextPt = (draggedWaypoint.index === draggedWaypoint.connection.waypoints.length - 1)
+      ? getNodeCenter(dfdNodes.find(n => n.id === draggedWaypoint.connection.to) || { x: targetX, y: targetY })
+      : draggedWaypoint.connection.waypoints[draggedWaypoint.index + 1];
+
+    if (prevPt) {
+      if (Math.abs(targetX - prevPt.x) < 9) targetX = prevPt.x;
+      if (Math.abs(targetY - prevPt.y) < 9) targetY = prevPt.y;
+    }
+    if (nextPt) {
+      if (Math.abs(targetX - nextPt.x) < 9) targetX = nextPt.x;
+      if (Math.abs(targetY - nextPt.y) < 9) targetY = nextPt.y;
+    }
+
+    wp.x = targetX;
+    wp.y = targetY;
+    renderDfd();
+  }
+}
+
+function onWaypointTouchEnd() {
+  if (draggedWaypoint) {
+    draggedWaypoint = null;
+    window.removeEventListener('touchmove', onWaypointTouchMove);
+    window.removeEventListener('touchend', onWaypointTouchEnd);
+    window.removeEventListener('touchcancel', onWaypointTouchEnd);
+    auditDfdDiagram();
+  }
+}
+
+function straightenCurrentFlow() {
+  if (currentEditingFlow) {
+    currentEditingFlow.waypoints = [];
+    closeAppModal();
+    renderDfd();
+    showToast("Arrow straightened (all bend points removed)", "info");
+  }
 }
 
 /* ========================================================
@@ -166,13 +329,13 @@ function loadPerfectDfdPreset() {
   ];
 
   dfdConnections = [
-    { id: "c1", from: "n1", to: "n2", label: "Item_Barcode", desc: "Product barcode scanned from merchandise" },
-    { id: "c2", from: "n3", to: "n2", label: "Price_And_Details", desc: "Unit price, description, and tax rate from inventory" },
-    { id: "c3", from: "n2", to: "n4", label: "Computed_Receipt", desc: "Printed customer receipt with itemized charges" },
-    { id: "c4", from: "n2", to: "n5", label: "Recorded_Sale", desc: "Finalized sales transaction record" },
-    { id: "c5", from: "n5", to: "n6", label: "Sales_Audit_Data", desc: "Batch sales records for daily balancing" },
-    { id: "c6", from: "n6", to: "n3", label: "Inventory_Adjustment", desc: "Stock decrement instruction per sold item" },
-    { id: "c7", from: "n6", to: "n7", label: "Daily_Revenue_Report", desc: "End-of-day sales summary report" }
+    { id: "c1", from: "n1", to: "n2", label: "Item_Barcode", desc: "Product barcode scanned from merchandise", waypoints: [] },
+    { id: "c2", from: "n3", to: "n2", label: "Price_And_Details", desc: "Unit price, description, and tax rate from inventory", waypoints: [] },
+    { id: "c3", from: "n2", to: "n4", label: "Computed_Receipt", desc: "Printed customer receipt with itemized charges", waypoints: [{ x: 195, y: 195 }] },
+    { id: "c4", from: "n2", to: "n5", label: "Recorded_Sale", desc: "Finalized sales transaction record", waypoints: [] },
+    { id: "c5", from: "n5", to: "n6", label: "Sales_Audit_Data", desc: "Batch sales records for daily balancing", waypoints: [] },
+    { id: "c6", from: "n6", to: "n3", label: "Inventory_Adjustment", desc: "Stock decrement instruction per sold item", waypoints: [] },
+    { id: "c7", from: "n6", to: "n7", label: "Daily_Revenue_Report", desc: "End-of-day sales summary report", waypoints: [] }
   ];
 
   renderDfd();
@@ -202,16 +365,25 @@ function renderDfd() {
     const fromDims = getNodeDims(fromNode);
     const toDims = getNodeDims(toNode);
 
-    // Compute perimeter intersections
+    // Compute perimeter intersections & waypoints
     let startPt, endPt;
+    c.waypoints = c.waypoints || [];
+
     if (c.from === c.to) {
       // Recursive loop
       startPt = { x: fromNode.x + fromDims.w, y: fromNode.y + 15 };
       endPt = { x: fromNode.x + fromDims.w, y: fromNode.y + fromDims.h - 15 };
-    } else {
+    } else if (c.waypoints.length === 0) {
       startPt = getRectIntersection(fromCenter.x, fromCenter.y, fromDims.w, fromDims.h, toCenter.x, toCenter.y);
       endPt = getRectIntersection(toCenter.x, toCenter.y, toDims.w, toDims.h, fromCenter.x, fromCenter.y);
+    } else {
+      const firstWp = c.waypoints[0];
+      const lastWp = c.waypoints[c.waypoints.length - 1];
+      startPt = getRectIntersection(fromCenter.x, fromCenter.y, fromDims.w, fromDims.h, firstWp.x, firstWp.y);
+      endPt = getRectIntersection(toCenter.x, toCenter.y, toDims.w, toDims.h, lastWp.x, lastWp.y);
     }
+
+    const allPoints = (c.from === c.to) ? [startPt, endPt] : [startPt, ...c.waypoints, endPt];
 
     // Check if error flow
     const isError = (fromNode.type === 'store' && toNode.type === 'store') ||
@@ -225,7 +397,7 @@ function renderDfd() {
 
     const flowGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     flowGroup.setAttribute("class", "data-flow-group");
-    flowGroup.setAttribute("style", "cursor: pointer;");
+    flowGroup.setAttribute("data-id", c.id);
 
     if (c.from === c.to) {
       // Loop path
@@ -236,28 +408,180 @@ function renderDfd() {
       path.setAttribute("stroke", strokeColor);
       path.setAttribute("stroke-width", "2.5");
       path.setAttribute("marker-end", markerType);
+      path.setAttribute("class", "data-flow-path");
       flowGroup.appendChild(path);
     } else {
-      // Line
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", startPt.x);
-      line.setAttribute("y1", startPt.y);
-      line.setAttribute("x2", endPt.x);
-      line.setAttribute("y2", endPt.y);
-      line.setAttribute("stroke", strokeColor);
-      line.setAttribute("stroke-width", "2.5");
-      line.setAttribute("marker-end", markerType);
-      flowGroup.appendChild(line);
+      // Build polyline path string through allPoints
+      let pathD = `M ${startPt.x} ${startPt.y}`;
+      for (let i = 1; i < allPoints.length; i++) {
+        pathD += ` L ${allPoints[i].x} ${allPoints[i].y}`;
+      }
 
-      // Label background pill
-      const midX = (startPt.x + endPt.x) / 2;
-      const midY = (startPt.y + endPt.y) / 2;
+      // 1. Transparent wider hitbox path for easy clicking to add bend points (Arduino style)
+      const hitbox = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      hitbox.setAttribute("d", pathD);
+      hitbox.setAttribute("fill", "none");
+      hitbox.setAttribute("stroke", "transparent");
+      hitbox.setAttribute("stroke-width", "16");
+      hitbox.setAttribute("stroke-linecap", "round");
+      hitbox.setAttribute("stroke-linejoin", "round");
+      hitbox.setAttribute("class", "wire-hitbox");
+      flowGroup.appendChild(hitbox);
+
+      // 2. Visible wire line
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", pathD);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", strokeColor);
+      path.setAttribute("stroke-width", "2.5");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      path.setAttribute("marker-end", markerType);
+      path.setAttribute("class", "data-flow-path");
+      flowGroup.appendChild(path);
+
+      // Hitbox event listeners to add bend points on click/drag
+      hitbox.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        if (currentCanvasMode === 'delete') {
+          dfdConnections = dfdConnections.filter(item => item.id !== c.id);
+          renderDfd();
+          auditDfdDiagram();
+          showToast("Deleted Data Flow", "warning");
+          return;
+        }
+        if (currentCanvasMode === 'edit') {
+          openEditFlowModal(c);
+          return;
+        }
+
+        // Add bend point at mouse position
+        const svg = document.getElementById('dfd-svg');
+        const svgPt = getSvgCoords(svg, e.clientX, e.clientY);
+
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        for (let i = 0; i < allPoints.length - 1; i++) {
+          const d = distToSegment(svgPt, allPoints[i], allPoints[i + 1]);
+          if (d < bestDist) {
+            bestDist = d;
+            bestIdx = i;
+          }
+        }
+
+        c.waypoints = c.waypoints || [];
+        const newWp = { x: Math.round(svgPt.x), y: Math.round(svgPt.y) };
+        c.waypoints.splice(bestIdx, 0, newWp);
+        renderDfd();
+        startDraggingWaypoint(e, c, bestIdx);
+        showToast("Added bend point. Drag to position wire.", "info");
+      });
+
+      hitbox.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) return;
+        e.stopPropagation();
+        if (currentCanvasMode === 'delete') {
+          dfdConnections = dfdConnections.filter(item => item.id !== c.id);
+          renderDfd();
+          auditDfdDiagram();
+          showToast("Deleted Data Flow", "warning");
+          return;
+        }
+        if (currentCanvasMode === 'edit') {
+          openEditFlowModal(c);
+          return;
+        }
+
+        const svg = document.getElementById('dfd-svg');
+        const touch = e.touches[0];
+        const svgPt = getSvgCoords(svg, touch.clientX, touch.clientY);
+
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        for (let i = 0; i < allPoints.length - 1; i++) {
+          const d = distToSegment(svgPt, allPoints[i], allPoints[i + 1]);
+          if (d < bestDist) {
+            bestDist = d;
+            bestIdx = i;
+          }
+        }
+
+        c.waypoints = c.waypoints || [];
+        const newWp = { x: Math.round(svgPt.x), y: Math.round(svgPt.y) };
+        c.waypoints.splice(bestIdx, 0, newWp);
+        renderDfd();
+        startDraggingWaypointTouch(e, c, bestIdx);
+        showToast("Added bend point. Drag to position wire.", "info");
+      }, { passive: false });
+
+      // 3. Waypoint draggable circular handles
+      c.waypoints.forEach((wp, wpIdx) => {
+        const handle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        handle.setAttribute("cx", wp.x);
+        handle.setAttribute("cy", wp.y);
+        handle.setAttribute("r", "5.5");
+        handle.setAttribute("fill", "#ffffff");
+        handle.setAttribute("stroke", strokeColor);
+        handle.setAttribute("stroke-width", "2.2");
+        handle.setAttribute("class", "waypoint-handle");
+
+        const hTitle = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        hTitle.textContent = "Bend point (Waypoint)\n• Drag to bend wire\n• Double-click or Right-click to remove";
+        handle.appendChild(hTitle);
+
+        handle.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+          if (currentCanvasMode === 'delete') {
+            c.waypoints.splice(wpIdx, 1);
+            renderDfd();
+            showToast("Removed bend point", "warning");
+            return;
+          }
+          startDraggingWaypoint(e, c, wpIdx);
+        });
+
+        handle.addEventListener('touchstart', (e) => {
+          e.stopPropagation();
+          if (e.cancelable) e.preventDefault();
+          if (currentCanvasMode === 'delete') {
+            c.waypoints.splice(wpIdx, 1);
+            renderDfd();
+            showToast("Removed bend point", "warning");
+            return;
+          }
+          startDraggingWaypointTouch(e, c, wpIdx);
+        }, { passive: false });
+
+        handle.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          c.waypoints.splice(wpIdx, 1);
+          renderDfd();
+          showToast("Removed bend point", "warning");
+        });
+
+        handle.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          c.waypoints.splice(wpIdx, 1);
+          renderDfd();
+          showToast("Removed bend point", "warning");
+        });
+
+        flowGroup.appendChild(handle);
+      });
+
+      // 4. Label placed at midpoint along full polyline path
+      const mid = getPolylineMidpoint(allPoints);
       const labelText = c.label || "Data_Flow";
       const pillWidth = Math.max(70, labelText.length * 7 + 24);
 
+      const labelGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      labelGroup.setAttribute("class", "data-flow-label-group");
+      labelGroup.setAttribute("style", "cursor: pointer;");
+
       const pillRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      pillRect.setAttribute("x", midX - pillWidth / 2);
-      pillRect.setAttribute("y", midY - 10);
+      pillRect.setAttribute("x", mid.x - pillWidth / 2);
+      pillRect.setAttribute("y", mid.y - 10);
       pillRect.setAttribute("width", pillWidth);
       pillRect.setAttribute("height", "20");
       pillRect.setAttribute("rx", "10");
@@ -265,25 +589,50 @@ function renderDfd() {
       pillRect.setAttribute("stroke", strokeColor);
       pillRect.setAttribute("stroke-width", "1.5");
       pillRect.setAttribute("filter", "drop-shadow(0 1px 3px rgba(0,0,0,0.1))");
-      flowGroup.appendChild(pillRect);
+      labelGroup.appendChild(pillRect);
 
-      // Label text with explicit directional arrow
       const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      text.setAttribute("x", midX);
-      text.setAttribute("y", midY + 3.5);
+      text.setAttribute("x", mid.x);
+      text.setAttribute("y", mid.y + 3.5);
       text.setAttribute("fill", isError ? "#991b1b" : "#1e40af");
       text.setAttribute("font-size", "9");
       text.setAttribute("font-weight", "800");
       text.setAttribute("text-anchor", "middle");
       text.textContent = `${labelText} ➔`;
-      flowGroup.appendChild(text);
+      labelGroup.appendChild(text);
 
-      // Output & Input indicator badges near endpoints
+      labelGroup.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentCanvasMode === 'delete') {
+          dfdConnections = dfdConnections.filter(item => item.id !== c.id);
+          renderDfd();
+          auditDfdDiagram();
+          showToast("Deleted Data Flow", "warning");
+        } else if (currentCanvasMode === 'edit') {
+          openEditFlowModal(c);
+        } else {
+          showToast(`Flow [${c.label}]: Output from ${fromNode.name} ➔ Input to ${toNode.name}${c.desc ? ' (' + c.desc + ')' : ''}`, 'info');
+        }
+      });
+
+      labelGroup.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        openEditFlowModal(c);
+      });
+
+      flowGroup.appendChild(labelGroup);
+
+      // 5. Output badge on first segment
+      const outPt0 = allPoints[0];
+      const outPt1 = allPoints[1];
+      const outDist = Math.hypot(outPt1.x - outPt0.x, outPt1.y - outPt0.y);
+      const tOut = outDist > 0 ? Math.min(22, outDist * 0.25) / outDist : 0;
+      const outX = outPt0.x + (outPt1.x - outPt0.x) * tOut;
+      const outY = outPt0.y + (outPt1.y - outPt0.y) * tOut;
+
       const outBadge = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      const outDx = (endPt.x - startPt.x) * 0.15;
-      const outDy = (endPt.y - startPt.y) * 0.15;
-      outBadge.setAttribute("x", startPt.x + outDx);
-      outBadge.setAttribute("y", startPt.y + outDy - 5);
+      outBadge.setAttribute("x", outX);
+      outBadge.setAttribute("y", outY - 5);
       outBadge.setAttribute("fill", "#64748b");
       outBadge.setAttribute("font-size", "7.5");
       outBadge.setAttribute("font-weight", "bold");
@@ -291,11 +640,17 @@ function renderDfd() {
       outBadge.textContent = "📤 OUT";
       flowGroup.appendChild(outBadge);
 
+      // 6. Input badge on last segment
+      const inPtPrev = allPoints[allPoints.length - 2];
+      const inPtEnd = allPoints[allPoints.length - 1];
+      const inDist = Math.hypot(inPtPrev.x - inPtEnd.x, inPtPrev.y - inPtEnd.y);
+      const tIn = inDist > 0 ? Math.min(22, inDist * 0.25) / inDist : 0;
+      const inX = inPtEnd.x + (inPtPrev.x - inPtEnd.x) * tIn;
+      const inY = inPtEnd.y + (inPtPrev.y - inPtEnd.y) * tIn;
+
       const inBadge = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      const inDx = (startPt.x - endPt.x) * 0.15;
-      const inDy = (startPt.y - endPt.y) * 0.15;
-      inBadge.setAttribute("x", endPt.x + inDx);
-      inBadge.setAttribute("y", endPt.y + inDy - 5);
+      inBadge.setAttribute("x", inX);
+      inBadge.setAttribute("y", inY - 5);
       inBadge.setAttribute("fill", strokeColor);
       inBadge.setAttribute("font-size", "7.5");
       inBadge.setAttribute("font-weight", "bold");
@@ -306,27 +661,8 @@ function renderDfd() {
 
     // Hover tooltip for data flow (shows name, endpoints, and optional description)
     const flowTitle = document.createElementNS("http://www.w3.org/2000/svg", "title");
-    flowTitle.textContent = `Flow: ${c.label} (${fromNode.name} ➔ ${toNode.name})${c.desc ? '\nDescription: ' + c.desc : ''}\n(Click in Edit mode or double-click to rename/edit)`;
+    flowTitle.textContent = `Flow: ${c.label} (${fromNode.name} ➔ ${toNode.name})${c.desc ? '\nDescription: ' + c.desc : ''}\n• Click wire to add bend points (Arduino style)\n• Drag points to bend arrow\n• Double-click point to remove`;
     flowGroup.appendChild(flowTitle);
-
-    flowGroup.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (currentCanvasMode === 'delete') {
-        dfdConnections = dfdConnections.filter(item => item.id !== c.id);
-        renderDfd();
-        auditDfdDiagram();
-        showToast("Deleted Data Flow", "warning");
-      } else if (currentCanvasMode === 'edit') {
-        openEditFlowModal(c);
-      } else {
-        showToast(`Flow [${c.label}]: Output from ${fromNode.name} ➔ Input to ${toNode.name}${c.desc ? ' (' + c.desc + ')' : ''}`, 'info');
-      }
-    });
-
-    flowGroup.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      openEditFlowModal(c);
-    });
 
     connGroup.appendChild(flowGroup);
   });
@@ -987,6 +1323,7 @@ function openEditNodeModal(node) {
 }
 
 function openEditFlowModal(c) {
+  currentEditingFlow = c;
   const modal = document.getElementById('app-modal');
   const title = document.getElementById('modal-title');
   const nameLabel = document.getElementById('modal-name-label');
@@ -997,6 +1334,7 @@ function openEditFlowModal(c) {
   const descInput = document.getElementById('modal-desc-input');
   const helpText = document.getElementById('modal-desc');
   const confirmBtn = document.getElementById('modal-confirm-btn');
+  const extraBox = document.getElementById('modal-extra-actions');
 
   const fromNode = dfdNodes.find(n => n.id === c.from);
   const toNode = dfdNodes.find(n => n.id === c.to);
@@ -1011,6 +1349,20 @@ function openEditFlowModal(c) {
 
   helpText.innerHTML = `<strong>Data Flow Rule:</strong> Flow represents data in motion from <strong>[${fromName}]</strong> (Output) ➔ <strong>[${toName}]</strong> (Input). Must be a <strong>noun phrase</strong> describing the data packet.`;
   if (chipsHeader) chipsHeader.innerText = "Quick Suggestions for Data Flow:";
+
+  if (extraBox) {
+    if (c.waypoints && c.waypoints.length > 0) {
+      extraBox.style.display = 'block';
+      extraBox.innerHTML = `
+        <button type="button" class="btn btn-outline" style="width: 100%; font-size: 0.76rem;" onclick="straightenCurrentFlow()">
+          🔄 Straighten Arrow (Remove All ${c.waypoints.length} Bend Point${c.waypoints.length > 1 ? 's' : ''})
+        </button>
+      `;
+    } else {
+      extraBox.style.display = 'none';
+      extraBox.innerHTML = '';
+    }
+  }
 
   const suggestions = [
     "Item_Barcode",
@@ -1167,6 +1519,12 @@ function closeAppModal() {
   if (modal) modal.classList.remove('active');
   selectedNodeForConnection = null;
   activeModalCallback = null;
+  currentEditingFlow = null;
+  const extraBox = document.getElementById('modal-extra-actions');
+  if (extraBox) {
+    extraBox.style.display = 'none';
+    extraBox.innerHTML = '';
+  }
   const input = document.getElementById('modal-input');
   if (input) input.onkeydown = null;
   const descInput = document.getElementById('modal-desc-input');

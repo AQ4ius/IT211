@@ -599,6 +599,37 @@ textarea.essay-input:focus {
   cursor: crosshair;
 }
 
+/* Arduino-Style Wire Bending & Waypoints */
+.wire-hitbox {
+  cursor: crosshair;
+  pointer-events: stroke;
+}
+
+.wire-hitbox:hover + .data-flow-path {
+  stroke-width: 3.5px !important;
+  stroke: #0284c7 !important;
+}
+
+.waypoint-handle {
+  cursor: move;
+  transition: r 0.15s ease, stroke-width 0.15s ease, filter 0.15s ease;
+}
+
+.waypoint-handle:hover {
+  r: 8px !important;
+  stroke: #0284c7 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 2px 5px rgba(2, 132, 199, 0.45));
+}
+
+#dfd-svg[data-mode="delete"] .waypoint-handle {
+  cursor: not-allowed;
+}
+
+#dfd-svg[data-mode="delete"] .waypoint-handle:hover {
+  stroke: var(--danger) !important;
+}
+
 .dfd-audit-panel {
   background: #ffffff;
   border: 1px solid var(--border);
