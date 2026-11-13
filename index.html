@@ -302,14 +302,20 @@
 
       <!-- Right: Real-time Mortal Sin Auditor -->
       <div class="dfd-audit-panel">
-        <div class="card-header" style="margin-bottom: 6px; padding-bottom: 6px;">
-          <h2 style="font-size: 1rem;">
+        <div class="card-header" style="margin-bottom: 6px; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <h2 style="font-size: 0.95rem; margin: 0; display: flex; align-items: center; gap: 6px;">
             <svg class="ui-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             Architecture Linter
           </h2>
-          <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.72rem;" onclick="auditDfdDiagram()">
-            Re-Audit
-          </button>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.72rem; display: flex; align-items: center; gap: 4px;" onclick="openAvoidRulesModal()" title="View comprehensive list of DFD rules and things to avoid">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Things to Avoid
+            </button>
+            <button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.72rem;" onclick="auditDfdDiagram()">
+              Re-Audit
+            </button>
+          </div>
         </div>
 
         <div class="audit-summary-box clean" id="audit-summary-box">
@@ -319,6 +325,11 @@
 
         <div class="palette-title">Mortal Sins Detected</div>
         <div class="sin-flag-list" id="sin-flag-list"></div>
+
+        <button class="btn btn-outline" style="width: 100%; margin-top: 10px; font-size: 0.76rem; display: flex; align-items: center; justify-content: center; gap: 6px; border-color: #fecaca; background: #fff5f5; color: #b91c1c; font-weight: 700;" onclick="openAvoidRulesModal()">
+          <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="#dc2626"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          List of Things to Avoid in DFD
+        </button>
       </div>
     </div>
   </section>
@@ -482,6 +493,40 @@
         <button class="btn btn-outline" type="button" onclick="closeAppModal()">Cancel</button>
         <button class="btn btn-primary" type="button" id="modal-confirm-btn">Save Changes</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- DFD RULES & THINGS TO AVOID MODAL -->
+<div id="avoid-rules-modal" class="modal-overlay">
+  <div class="modal-box avoid-modal-box">
+    <div class="modal-header">
+      <h3 style="color: #991b1b; display: flex; align-items: center; gap: 8px;">
+        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="#dc2626"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Things to Avoid in DFD (Systems Analyst Reviewer)</span>
+      </h3>
+      <button class="modal-close-btn" onclick="closeAvoidRulesModal()" aria-label="Close modal">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 16px 20px;">
+      <!-- Search -->
+      <div style="margin-bottom: 10px;">
+        <input type="text" id="avoid-search-input" class="modal-input" placeholder="Search rules or sins (e.g. crossing lines, black hole, context diagram...)" oninput="filterAvoidRules()" style="font-size: 0.82rem; padding: 8px 12px;">
+      </div>
+      <!-- Category Tabs -->
+      <div class="filter-bar" style="justify-content: flex-start; margin-bottom: 12px; gap: 6px;">
+        <button class="filter-btn active avoid-tab-btn" onclick="switchAvoidCategory('all', this)">All (19)</button>
+        <button class="filter-btn avoid-tab-btn" onclick="switchAvoidCategory('sins', this)">10 Mortal Sins</button>
+        <button class="filter-btn avoid-tab-btn" onclick="switchAvoidCategory('drawing', this)">Drawing &amp; Layout</button>
+        <button class="filter-btn avoid-tab-btn" onclick="switchAvoidCategory('naming', this)">Naming &amp; Syntax</button>
+        <button class="filter-btn avoid-tab-btn" onclick="switchAvoidCategory('level', this)">Level Rules</button>
+      </div>
+
+      <!-- Scrollable list of rules -->
+      <div id="avoid-rules-container" class="avoid-rules-scroll-area"></div>
+    </div>
+    <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.72rem; color: #64748b;">Based on IT211 Course Reviewer &amp; Gane-Sarson / Yourdon Standards</span>
+      <button class="btn btn-primary" type="button" onclick="closeAvoidRulesModal(); auditDfdDiagram();">Done &bull; Re-Audit Canvas</button>
     </div>
   </div>
 </div>

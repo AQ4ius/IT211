@@ -2422,3 +2422,236 @@ function auditDfdDiagram() {
     });
   }
 }
+
+/* ========================================================
+   DFD THINGS TO AVOID GUIDE & MODAL MANAGER
+   ======================================================== */
+const DFD_AVOID_RULES = [
+  {
+    id: "sin-1",
+    cat: "sins",
+    tag: "Mortal Sin #1",
+    title: "Direct Store to Store Flow",
+    desc: "Connecting a Data Store directly to another Data Store. Data stores are passive storage repositories with no autonomous engine; they cannot read, write, or replicate data to another store on their own.",
+    fix: "Insert an intermediary Process: Store A -> [Process (Read & Transform)] -> Store B."
+  },
+  {
+    id: "sin-2",
+    cat: "sins",
+    tag: "Mortal Sin #2",
+    title: "External Entity to External Entity Flow",
+    desc: "Drawing a data flow directly between two External Entities. If communication passes between external parties without entering or exiting our software system, it is outside the system scope and must never be modeled.",
+    fix: "Delete the flow or route the data through an internal system Process if the system acts as a broker or processor."
+  },
+  {
+    id: "sin-3",
+    cat: "sins",
+    tag: "Mortal Sin #3",
+    title: "External Entity to Data Store Flow",
+    desc: "An External Entity directly reading from or writing to a Data Store. Users, customers, and external machines are never granted direct, unmediated access to database tables without software authentication, validation, and authorization.",
+    fix: "Connect the External Entity to an input validation Process, which then writes to or reads from the Data Store."
+  },
+  {
+    id: "sin-4",
+    cat: "sins",
+    tag: "Mortal Sin #4",
+    title: "Black Hole Process",
+    desc: "A process that receives data flow inputs but produces ZERO outputs. Processes exist solely to transform data; any process that only absorbs data without producing reports, database updates, or entity signals represents an analytical dead end.",
+    fix: "Add an outgoing data flow (to a Data Store, External Entity, or another Process) or remove the redundant process."
+  },
+  {
+    id: "sin-5",
+    cat: "sins",
+    tag: "Mortal Sin #5",
+    title: "Miracle Process",
+    desc: "A process that generates output data flows without receiving ANY inputs. Data cannot materialize spontaneously out of thin air (violates the Law of Data Conservation).",
+    fix: "Supply the process with required transactional inputs, user parameters, or reference database tables."
+  },
+  {
+    id: "sin-6",
+    cat: "sins",
+    tag: "Mortal Sin #6",
+    title: "Gray Hole Phenomenon (The H2O Principle)",
+    desc: "A process where the inputs are factually insufficient to produce the outputs. For example, a process receives only 'Item_Barcode' from a customer and outputs a 'Tax_Invoice_With_Totals' without querying a Price Database or Tax Table.",
+    fix: "Supply all required lookup inputs (e.g., Price Catalog, Tax Rates) needed by the process's internal logic."
+  },
+  {
+    id: "sin-7",
+    cat: "sins",
+    tag: "Mortal Sin #7",
+    title: "Read-Only / Unpopulated Data Store",
+    desc: "A Data Store that is only queried (outputs) but never receives an incoming data flow to write or populate records. The database will permanently remain empty.",
+    fix: "Add an upstream setup, migration, batch import, or transaction process that writes records into the store."
+  },
+  {
+    id: "sin-8",
+    cat: "sins",
+    tag: "Mortal Sin #8",
+    title: "Write-Only Data Store / Dead Sink",
+    desc: "A Data Store where records are continually saved but never read or queried by any process, reporting engine, or audit flow.",
+    fix: "Verify the business purpose of the store and connect reader processes (e.g. Audit, Reporting, Invoicing)."
+  },
+  {
+    id: "sin-9",
+    cat: "sins",
+    tag: "Mortal Sin #9",
+    title: "Recursive Feedback Loop / Self-Loop",
+    desc: "Drawing an arrow from a process output directly back into the same process's input. DFDs model state-free data transformations, not programmatic execution cycles (like while/for loops).",
+    fix: "Store intermediate results into a Data Store, which the process reads in subsequent transaction cycles."
+  },
+  {
+    id: "sin-10",
+    cat: "sins",
+    tag: "Mortal Sin #10",
+    title: "Double-Headed / Bidirectional Arrows",
+    desc: "Drawing an arrow with heads at both ends (<->). DFD data flows must be strictly unidirectional packets of data moving in one direction at a time.",
+    fix: "Split bidirectional communication into two distinct unidirectional arrows with unique semantic names (e.g., '1. Account_Inquiry' and '2. Account_Summary')."
+  },
+  {
+    id: "draw-1",
+    cat: "drawing",
+    tag: "Drawing Rule",
+    title: "Crossing Data Flow Lines (Spaghetti Wiring)",
+    desc: "Allowing data flow arrows to cross directly over each other. Crossing lines cause visual ambiguity, making it hard to trace inputs and outputs.",
+    fix: "Use bend points to route wires cleanly around blocks, or use duplicate symbols (draw duplicate external entities or stores marked with a diagonal slash or duplicate identifier)."
+  },
+  {
+    id: "draw-2",
+    cat: "drawing",
+    tag: "Drawing Rule",
+    title: "Process Clutter (> 7 to 9 Processes - Miller's Law)",
+    desc: "Crowding more than 7 to 9 processes onto a single DFD canvas. Violates Miller's 7 ± 2 Cognitive Law and makes the diagram overwhelming and unreadable.",
+    fix: "Decompose into hierarchical levels: consolidate child tasks into 3 to 7 parent processes on Level 0, and explode each into child Level 1 DFDs."
+  },
+  {
+    id: "draw-3",
+    cat: "drawing",
+    tag: "Drawing Rule",
+    title: "Routing Lines Through Symbols",
+    desc: "Passing an arrow line straight through the middle of an unrelated process, entity, or store.",
+    fix: "Add bend points or adjust anchor heads along the element perimeter to route around other shapes."
+  },
+  {
+    id: "draw-4",
+    cat: "drawing",
+    tag: "Drawing Rule",
+    title: "Unattached / Floating Flow Terminals",
+    desc: "Drawing an arrow that hangs in empty space without both a definite source element and a target element.",
+    fix: "Ensure all data flows start at an element's perimeter and terminate cleanly at another element's perimeter."
+  },
+  {
+    id: "name-1",
+    cat: "naming",
+    tag: "Naming Syntax",
+    title: "Action Verbs for External Entities",
+    desc: "Naming an external entity with an action verb (e.g. 'Compute_Tax', 'Process_Order'). Entities are external people, systems, departments, or organizations.",
+    fix: "Use strictly NOUN PHRASES in ALL CAPS (e.g. 'CUSTOMER', 'SUPPLIER', 'BANK_HOST', 'ACCOUNTING_DEPARTMENT')."
+  },
+  {
+    id: "name-2",
+    cat: "naming",
+    tag: "Naming Syntax",
+    title: "Noun-Only Names for Processes (Missing Verb)",
+    desc: "Naming a process without an active verb (e.g. 'Student_Records' or 'Customer_Accounts'). Processes perform transformation work and must state what they do.",
+    fix: "Start with an active verb phrase including reference number (e.g. '1.0 Verify Credentials', '2.0 Process Order')."
+  },
+  {
+    id: "name-3",
+    cat: "naming",
+    tag: "Naming Syntax",
+    title: "Generic or Blank Flow Labels ('Data', 'Info')",
+    desc: "Leaving flows blank or giving them generic placeholders like 'Data_Flow', 'Info', 'Output', or 'Input'.",
+    fix: "Every data flow must name the concrete packet, record, or form (e.g. 'Payment_Receipt', 'Item_Barcode', 'Verified_Profile')."
+  },
+  {
+    id: "name-4",
+    cat: "naming",
+    tag: "Naming Syntax",
+    title: "Non-Plural or Unnumbered Data Store Names",
+    desc: "Naming a data store as a single item or without an identifier (e.g. 'Order' instead of 'D1 ORDERS'). Stores hold collections of multiple records.",
+    fix: "Follow the convention: 'D[#] + PLURAL NOUN' in ALL CAPS (e.g. 'D1 CUSTOMERS', 'D2 SALES ARCHIVE', 'D3 PRODUCT INVENTORY')."
+  },
+  {
+    id: "level-1",
+    cat: "level",
+    tag: "Level Rule",
+    title: "Data Stores on a Context Diagram (Process 0)",
+    desc: "Placing ANY Data Store symbol on a Context Diagram (Level 0 Overview). Absolute cardinal rule: Context Diagrams show ONLY Process 0 and External Entities at the boundary.",
+    fix: "Remove all Data Stores from the Context view. Data stores represent internal storage and must only appear at Level 0 decomposition and below."
+  }
+];
+
+let activeAvoidCategory = 'all';
+
+function openAvoidRulesModal() {
+  const modal = document.getElementById('avoid-rules-modal');
+  if (!modal) return;
+  activeAvoidCategory = 'all';
+  const searchInput = document.getElementById('avoid-search-input');
+  if (searchInput) searchInput.value = '';
+  
+  // Reset tab buttons
+  document.querySelectorAll('.avoid-tab-btn').forEach((btn, idx) => {
+    btn.classList.toggle('active', idx === 0);
+  });
+
+  renderAvoidRules();
+  modal.classList.add('active');
+  if (searchInput) setTimeout(() => searchInput.focus(), 80);
+}
+
+function closeAvoidRulesModal() {
+  const modal = document.getElementById('avoid-rules-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function switchAvoidCategory(cat, btn) {
+  activeAvoidCategory = cat;
+  document.querySelectorAll('.avoid-tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderAvoidRules();
+}
+
+function filterAvoidRules() {
+  renderAvoidRules();
+}
+
+function renderAvoidRules() {
+  const container = document.getElementById('avoid-rules-container');
+  if (!container) return;
+
+  const query = (document.getElementById('avoid-search-input')?.value || '').toLowerCase().trim();
+
+  let filtered = DFD_AVOID_RULES.filter(rule => {
+    const matchCat = (activeAvoidCategory === 'all') || (rule.cat === activeAvoidCategory);
+    if (!matchCat) return false;
+    if (!query) return true;
+    return rule.title.toLowerCase().includes(query) ||
+           rule.desc.toLowerCase().includes(query) ||
+           rule.fix.toLowerCase().includes(query) ||
+           rule.tag.toLowerCase().includes(query);
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 24px; color: #94a3b8; font-size: 0.85rem;">
+        No rules or sins found matching "${query}". Try searching for "black hole", "crossing", or "context".
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(r => `
+    <div class="avoid-card cat-${r.cat}">
+      <div class="avoid-card-header">
+        <span class="avoid-card-title">${r.title}</span>
+        <span class="avoid-tag tag-${r.cat}">${r.tag}</span>
+      </div>
+      <div class="avoid-card-desc">${r.desc}</div>
+      <div class="avoid-fix-box">
+        <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+        <span><strong>How to Fix / Avoid:</strong> ${r.fix}</span>
+      </div>
+    </div>
+  `).join("");
+}

@@ -1377,6 +1377,10 @@ textarea.essay-input:focus {
     width: 95%;
     margin: 10px;
   }
+  .avoid-modal-box {
+    max-width: 96% !important;
+    max-height: 90vh !important;
+  }
   .toast-container {
     left: 12px;
     right: 12px;
@@ -1386,6 +1390,106 @@ textarea.essay-input:focus {
     font-size: 0.78rem;
     padding: 10px 14px;
   }
+}
+
+/* ========================================================
+   DFD THINGS TO AVOID GUIDE MODAL STYLES
+   ======================================================== */
+.avoid-modal-box {
+  max-width: 680px;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.avoid-rules-scroll-area {
+  overflow-y: auto;
+  max-height: calc(86vh - 180px);
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.avoid-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  padding: 11px 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  transition: all 0.2s ease;
+}
+
+.avoid-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 8px -1px rgba(15, 23, 42, 0.08);
+}
+
+.avoid-card.cat-drawing {
+  border-left-color: #f59e0b;
+}
+
+.avoid-card.cat-naming {
+  border-left-color: #6366f1;
+}
+
+.avoid-card.cat-level {
+  border-left-color: #0284c7;
+}
+
+.avoid-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.avoid-card-title {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.avoid-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.avoid-tag.tag-sin { background: #fee2e2; color: #b91c1c; }
+.avoid-tag.tag-drawing { background: #fef3c7; color: #b45309; }
+.avoid-tag.tag-naming { background: #e0e7ff; color: #3730a3; }
+.avoid-tag.tag-level { background: #e0f2fe; color: #0369a1; }
+
+.avoid-card-desc {
+  font-size: 0.77rem;
+  color: #475569;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.avoid-fix-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.73rem;
+  color: #166534;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.35;
+}
+
+.avoid-fix-box svg {
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 @media (max-width: 480px) {
