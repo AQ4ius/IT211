@@ -769,17 +769,108 @@ function renderDfd() {
     flowGroup.setAttribute("class", "data-flow-group");
     flowGroup.setAttribute("data-id", c.id);
 
+    // Global flow delete handler when clicked in delete mode
+    flowGroup.addEventListener('click', (e) => {
+      if (currentCanvasMode === 'delete') {
+        e.stopPropagation();
+        dfdConnections = dfdConnections.filter(item => item.id !== c.id);
+        renderDfd();
+        auditDfdDiagram();
+        showToast("Deleted Data Flow", "warning");
+      }
+    });
+
     if (c.from === c.to) {
-      // Loop path
+      // Loop path geometry
+      const arc = `M ${startPt.x} ${startPt.y} C ${startPt.x + 55} ${startPt.y - 20}, ${endPt.x + 55} ${endPt.y + 20}, ${endPt.x} ${endPt.y}`;
+
+      // Transparent wide hitbox for selecting, editing, or deleting recursive loop
+      const hitbox = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      hitbox.setAttribute("d", arc);
+      hitbox.setAttribute("fill", "none");
+      hitbox.setAttribute("stroke", "transparent");
+      hitbox.setAttribute("stroke-width", "30");
+      hitbox.setAttribute("class", "wire-hitbox");
+      hitbox.setAttribute("style", "cursor: pointer;");
+      flowGroup.appendChild(hitbox);
+
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      const arc = `M ${startPt.x} ${startPt.y} C ${startPt.x + 50} ${startPt.y - 20}, ${endPt.x + 50} ${endPt.y + 20}, ${endPt.x} ${endPt.y}`;
       path.setAttribute("d", arc);
       path.setAttribute("fill", "none");
       path.setAttribute("stroke", strokeColor);
       path.setAttribute("stroke-width", "2.5");
       path.setAttribute("marker-end", markerType);
       path.setAttribute("class", "data-flow-path");
+      path.setAttribute("style", "cursor: pointer;");
       flowGroup.appendChild(path);
+
+      const handleLoopClick = (e) => {
+        e.stopPropagation();
+        if (currentCanvasMode === 'delete') {
+          dfdConnections = dfdConnections.filter(item => item.id !== c.id);
+          renderDfd();
+          auditDfdDiagram();
+          showToast("Deleted Recursive Loop Flow", "warning");
+        } else if (currentCanvasMode === 'edit') {
+          openEditFlowModal(c);
+        }
+      };
+
+      hitbox.addEventListener('click', handleLoopClick);
+      hitbox.addEventListener('touchstart', (e) => {
+        if (currentCanvasMode === 'delete' || currentCanvasMode === 'edit') {
+          e.stopPropagation();
+          handleLoopClick(e);
+        }
+      });
+      path.addEventListener('click', handleLoopClick);
+
+      // Label pill for recursive loop
+      const midX = fromNode.x + fromDims.w + 45 + (c.labelOffset ? c.labelOffset.x : 0);
+      const midY = fromNode.y + fromDims.h / 2 + (c.labelOffset ? c.labelOffset.y : 0);
+      const labelText = c.label || "RecursiveLoop";
+      const pillWidth = Math.max(75, labelText.length * 7 + 24);
+
+      const labelGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      labelGroup.setAttribute("class", "data-flow-label-group");
+      labelGroup.setAttribute("style", "cursor: pointer; touch-action: none;");
+
+      const pillRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      pillRect.setAttribute("x", midX - pillWidth / 2);
+      pillRect.setAttribute("y", midY - 10);
+      pillRect.setAttribute("width", pillWidth);
+      pillRect.setAttribute("height", "20");
+      pillRect.setAttribute("rx", "10");
+      pillRect.setAttribute("fill", "#ffffff");
+      pillRect.setAttribute("stroke", strokeColor);
+      pillRect.setAttribute("stroke-width", "1.5");
+      pillRect.setAttribute("filter", "drop-shadow(0 1px 3px rgba(0,0,0,0.1))");
+      labelGroup.appendChild(pillRect);
+
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", midX);
+      text.setAttribute("y", midY + 3.5);
+      text.setAttribute("fill", "#991b1b");
+      text.setAttribute("font-size", "9");
+      text.setAttribute("font-weight", "800");
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("style", "pointer-events: none;");
+      text.textContent = `${labelText} \u21ba`;
+      labelGroup.appendChild(text);
+
+      labelGroup.addEventListener('click', handleLoopClick);
+      labelGroup.addEventListener('touchstart', (e) => {
+        if (currentCanvasMode === 'delete' || currentCanvasMode === 'edit') {
+          e.stopPropagation();
+          handleLoopClick(e);
+        }
+      });
+      labelGroup.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        openEditFlowModal(c);
+      });
+
+      flowGroup.appendChild(labelGroup);
     } else {
       // Build polyline path string through allPoints
       let pathD = `M ${startPt.x} ${startPt.y}`;
@@ -1984,8 +2075,9 @@ function openDataFlowModal(fromNode, toNode, callback) {
   const onConfirm = () => {
     const flowName = input.value.trim() || "Data_Flow";
     const flowDesc = descInput ? descInput.value.trim() : "";
+    const cb = activeModalCallback;
     closeAppModal();
-    if (activeModalCallback) activeModalCallback(flowName, flowDesc);
+    if (cb) cb(flowName, flowDesc);
   };
 
   confirmBtn.onclick = onConfirm;
