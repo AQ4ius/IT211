@@ -24,7 +24,7 @@ function loadRandomQuestion() {
 
   let fullDesc = q.desc;
   if (q.scenario) {
-    fullDesc += `<br><br><strong style="color: var(--primary); display: block; margin-bottom: 4px;">💼 Systems Analysis &amp; Business Task:</strong>${q.scenario}`;
+    fullDesc += `<br><br><strong style="color: var(--primary); display: flex; align-items: center; gap: 6px; margin-bottom: 4px;"><svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Systems Analysis &amp; Business Task:</strong>${q.scenario}`;
   }
   document.getElementById('q-desc').innerHTML = fullDesc;
 
@@ -151,13 +151,13 @@ function gradeEssay() {
   document.getElementById('scan-status').innerText = "AUDIT COMPLETE";
   let consoleHtml = "";
   matchedKeywords.forEach(k => {
-    consoleHtml += `<span class="matched-tag">✓ MATCHED_TOKEN: [${k}]</span>`;
+    consoleHtml += `<span class="matched-tag">[PASS] MATCHED_TOKEN: [${k}]</span>`;
   });
   missingKeywords.forEach(k => {
-    consoleHtml += `<span class="missing-tag">✗ MISSING_TOKEN: [${k}] (Regex lookup failed)</span>`;
+    consoleHtml += `<span class="missing-tag">[FAIL] MISSING_TOKEN: [${k}] (Regex lookup failed)</span>`;
   });
   triggeredTraps.forEach(t => {
-    consoleHtml += `<span class="trap-tag">⚠️ PENALTY TRIGGERED: -${t.penalty}pts [${t.reason}]</span>`;
+    consoleHtml += `<span class="trap-tag">[WARN] PENALTY TRIGGERED: -${t.penalty}pts [${t.reason}]</span>`;
   });
   document.getElementById('regex-log-output').innerHTML = consoleHtml;
 

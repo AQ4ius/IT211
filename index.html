@@ -15,26 +15,34 @@
 <header class="app-header">
   <div class="nav-inner">
     <div class="brand-group">
-      <div class="brand-logo">RAM</div>
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
       <div class="brand-text">
-        <h1>IT 211 RAM • Systems Analyst AI Trainer</h1>
-        <p>Requirements Engineering &amp; Process Modeling Simulator</p>
+        <h1>IT 211 RAM • Systems Analysis Training Arena</h1>
+        <p>Requirements Engineering &amp; Process Modeling Architecture</p>
       </div>
     </div>
 
     <!-- Navigation Tabs -->
     <nav class="nav-tabs">
       <button class="nav-tab-btn active" onclick="switchTab('essay-tab')">
-        <span>✍️</span> Essay AI Grader
+        <svg class="ui-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Essay AI Grader
       </button>
       <button class="nav-tab-btn" onclick="switchTab('dfd-tab')">
-        <span>📊</span> Interactive DFD Lab
+        <svg class="ui-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4M6.5 10v4M14 17.5h-4"/></svg>
+        Interactive DFD Lab
       </button>
       <button class="nav-tab-btn" onclick="switchTab('flashcard-tab')">
-        <span>🎴</span> Active Recall Cards
+        <svg class="ui-icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        Active Recall Cards
       </button>
       <button class="nav-tab-btn" onclick="switchTab('audit-tab')">
-        <span>🔍</span> Essay Forensics
+        <svg class="ui-icon" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Essay Forensics
       </button>
     </nav>
   </div>
@@ -51,9 +59,13 @@
       <!-- Left: Question & Input -->
       <div class="card">
         <div class="card-header">
-          <h2><span>📝</span> Essay Diagnostic Arena</h2>
+          <h2>
+            <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Essay Diagnostic Arena
+          </h2>
           <button class="btn btn-outline" onclick="loadRandomQuestion()">
-            <span>🎲</span> Random Question
+            <svg class="ui-icon" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+            Random Scenario
           </button>
         </div>
 
@@ -74,10 +86,12 @@
 
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
           <button class="btn btn-outline" onclick="loadExemplarAnswer()">
-            <span>💡</span> Load Model 30/30 Answer
+            <svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+            Load Model 30/30 Answer
           </button>
           <button class="btn btn-primary" onclick="gradeEssay()">
-            <span>⚡</span> Run Automated Exam Audit
+            <svg class="ui-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Run Automated Exam Audit
           </button>
         </div>
       </div>
@@ -126,7 +140,10 @@
 
         <!-- In-Depth Diagnostic Feedback -->
         <div class="feedback-box">
-          <h4 style="font-size: 0.85rem; font-weight: 800; color: var(--dark); margin-bottom: 6px;"><span>🔬</span> System Analyst Diagnostics:</h4>
+          <h4 style="font-size: 0.85rem; font-weight: 800; color: var(--dark); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            <svg class="ui-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Systems Analyst Diagnostics:
+          </h4>
           <div id="detailed-feedback" style="color: var(--slate);">
             Write an essay on the left and submit. The system will explain exactly what points were awarded, which technical terms were missing, and what deductions were applied.
           </div>
@@ -154,7 +171,14 @@
 
         <div class="palette-title">Add Elements</div>
         <div class="shape-item" onclick="addDfdNode('process')">
-          <div class="shape-preview process-gs">⚙️</div>
+          <div class="shape-preview-svg">
+            <svg viewBox="0 0 32 32" fill="none">
+              <rect x="2" y="3" width="28" height="26" rx="5" fill="#eff6ff" stroke="#2563eb" stroke-width="1.8"/>
+              <line x1="2" y1="11" x2="30" y2="11" stroke="#2563eb" stroke-width="1.5"/>
+              <line x1="6" y1="7" x2="14" y2="7" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="16" cy="20" r="3" fill="#2563eb"/>
+            </svg>
+          </div>
           <div>
             <div>Process Bubble</div>
             <small style="color: var(--muted);">Verb-Object (e.g. 1.0 Compute Sales)</small>
@@ -162,7 +186,12 @@
         </div>
 
         <div class="shape-item" onclick="addDfdNode('entity')">
-          <div class="shape-preview entity">👤</div>
+          <div class="shape-preview-svg">
+            <svg viewBox="0 0 32 32" fill="none">
+              <rect x="3" y="6" width="26" height="20" rx="1.5" fill="#f8fafc" stroke="#475569" stroke-width="1.8"/>
+              <rect x="6" y="9" width="20" height="14" fill="#e2e8f0" opacity="0.4"/>
+            </svg>
+          </div>
           <div>
             <div>External Entity</div>
             <small style="color: var(--muted);">Noun (e.g. Customer, Cashier)</small>
@@ -170,7 +199,15 @@
         </div>
 
         <div class="shape-item" onclick="addDfdNode('store')">
-          <div class="shape-preview store-gs">🗄️</div>
+          <div class="shape-preview-svg">
+            <svg viewBox="0 0 32 32" fill="none">
+              <line x1="3" y1="7" x2="30" y2="7" stroke="#0284c7" stroke-width="1.8"/>
+              <line x1="3" y1="25" x2="30" y2="25" stroke="#0284c7" stroke-width="1.8"/>
+              <line x1="3" y1="7" x2="3" y2="25" stroke="#0284c7" stroke-width="1.8"/>
+              <line x1="10" y1="7" x2="10" y2="25" stroke="#0284c7" stroke-width="1.5"/>
+              <rect x="13" y="12" width="13" height="8" rx="1" fill="#e0f2fe"/>
+            </svg>
+          </div>
           <div>
             <div>Data Store</div>
             <small style="color: var(--muted);">ALL CAPS (e.g. D1 SALES)</small>
@@ -179,13 +216,16 @@
 
         <div class="palette-title">Presets &amp; Tests</div>
         <button class="btn btn-outline" style="width: 100%; font-size: 0.78rem;" onclick="loadBuggyDfdPreset()">
-          <span>⚠️</span> Load Diagram with "Mortal Sins"
+          <svg class="ui-icon" style="color: var(--warning);" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Load Diagram with "Mortal Sins"
         </button>
         <button class="btn btn-outline" style="width: 100%; font-size: 0.78rem;" onclick="loadPerfectDfdPreset()">
-          <span>⭐</span> Load Perfect Balanced DFD
+          <svg class="ui-icon" style="color: var(--success);" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Load Perfect Balanced DFD
         </button>
         <button class="btn btn-outline" style="width: 100%; font-size: 0.78rem; color: var(--danger);" onclick="clearDfdCanvas()">
-          <span>🗑️</span> Clear Canvas
+          <svg class="ui-icon" style="color: var(--danger);" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          Clear Canvas
         </button>
       </div>
 
@@ -193,19 +233,41 @@
       <div class="dfd-canvas-container">
         <div class="canvas-top-bar">
           <div class="canvas-mode-group">
-            <button class="canvas-mode-btn active" id="btn-mode-move" onclick="setCanvasMode('move')">✋ Move / Select</button>
-            <button class="canvas-mode-btn" id="btn-mode-connect" onclick="setCanvasMode('connect')">🔗 Connect Flow (Arrow)</button>
-            <button class="canvas-mode-btn" id="btn-mode-edit" onclick="setCanvasMode('edit')">✏️ Edit / Rename</button>
-            <button class="canvas-mode-btn" id="btn-mode-delete" onclick="setCanvasMode('delete')">❌ Delete Element</button>
+            <button class="canvas-mode-btn active" id="btn-mode-move" onclick="setCanvasMode('move')">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+              Move / Select
+            </button>
+            <button class="canvas-mode-btn" id="btn-mode-connect" onclick="setCanvasMode('connect')">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Connect Flow (Arrow)
+            </button>
+            <button class="canvas-mode-btn" id="btn-mode-edit" onclick="setCanvasMode('edit')">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit / Rename
+            </button>
+            <button class="canvas-mode-btn" id="btn-mode-delete" onclick="setCanvasMode('delete')">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Delete Element
+            </button>
           </div>
 
           <!-- Canvas Zoom & Fit Controls -->
           <div class="canvas-zoom-group">
-            <button class="canvas-zoom-btn" onclick="zoomCanvas(-0.15)" title="Zoom Out (or Scroll Wheel Down)">➖</button>
+            <button class="canvas-zoom-btn" onclick="zoomCanvas(-0.15)" title="Zoom Out (or Scroll Wheel Down)">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
             <span class="zoom-level-text" id="zoom-level-display" onclick="resetCanvasZoom()" title="Click to Reset Zoom">100%</span>
-            <button class="canvas-zoom-btn" onclick="zoomCanvas(0.15)" title="Zoom In (or Scroll Wheel Up)">➕</button>
-            <button class="canvas-zoom-btn" onclick="fitCanvasToElements()" title="Fit all shapes to view">🎯 Fit</button>
-            <button class="canvas-zoom-btn" onclick="resetCanvasZoom()" title="Reset to 100%">↺ 100%</button>
+            <button class="canvas-zoom-btn" onclick="zoomCanvas(0.15)" title="Zoom In (or Scroll Wheel Up)">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+            <button class="canvas-zoom-btn" onclick="fitCanvasToElements()" title="Fit all shapes to view">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><polyline points="21 15 21 21 15 21"/><polyline points="3 9 3 3 9 3"/></svg>
+              Fit
+            </button>
+            <button class="canvas-zoom-btn" onclick="resetCanvasZoom()" title="Reset to 100%">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              100%
+            </button>
           </div>
 
           <span style="font-size: 0.75rem; font-weight: 700; color: var(--slate);" id="canvas-status">Mode: Select &amp; Drag</span>
@@ -228,16 +290,19 @@
         </svg>
 
         <div class="flow-legend">
-          <span><div class="dot-blue"></div> Valid Flow: <strong>Output ➔ Input</strong></span>
+          <span><div class="dot-blue"></div> Valid Flow: <strong>Output &rarr; Input</strong></span>
           <span><div class="dot-red"></div> Mortal Sin Flow</span>
-          <span style="margin-left: auto;">💡 <em>Click arrow to add bend points (Arduino wiring) • Drag points to route • Double-click point to remove</em></span>
+          <span style="margin-left: auto;"><em>Click arrow to add bend points (Arduino wiring) &bull; Drag points to route &bull; Double-click point to remove</em></span>
         </div>
       </div>
 
       <!-- Right: Real-time Mortal Sin Auditor -->
       <div class="dfd-audit-panel">
         <div class="card-header" style="margin-bottom: 6px; padding-bottom: 6px;">
-          <h2 style="font-size: 1rem;"><span>🛡️</span> Architecture Linter</h2>
+          <h2 style="font-size: 1rem;">
+            <svg class="ui-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Architecture Linter
+          </h2>
           <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.72rem;" onclick="auditDfdDiagram()">
             Re-Audit
           </button>
@@ -280,7 +345,7 @@
               <h3 id="fc-question">What is a "Gray Hole" in Data Flow Diagramming?</h3>
               <p>Click anywhere to flip and reveal the strict professor textbook definition.</p>
             </div>
-            <div class="card-hint">💡 Click or Tap to Flip 🔄</div>
+            <div class="card-hint">Click card or press Spacebar to flip</div>
           </div>
 
           <!-- Back -->
@@ -300,9 +365,18 @@
 
       <!-- Controls -->
       <div class="flashcard-nav">
-        <button class="btn btn-outline" onclick="prevCard()"><span>⬅️</span> Previous</button>
-        <button class="btn btn-primary" onclick="randomCard()"><span>🎲</span> Shuffle</button>
-        <button class="btn btn-outline" onclick="nextCard()">Next <span>➡️</span></button>
+        <button class="btn btn-outline" onclick="prevCard()">
+          <svg class="ui-icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Previous
+        </button>
+        <button class="btn btn-primary" onclick="randomCard()">
+          <svg class="ui-icon" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+          Shuffle
+        </button>
+        <button class="btn btn-outline" onclick="nextCard()">
+          Next
+          <svg class="ui-icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
     </div>
   </section>
@@ -313,7 +387,10 @@
   <section id="audit-tab" class="tab-pane">
     <div class="card">
       <div class="card-header">
-        <h2><span>🔍</span> Forensic Breakdown: Conversational Fluff vs. Systems Analyst Precision</h2>
+        <h2>
+          <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Forensic Breakdown: Conversational Fluff vs. Systems Analyst Precision
+        </h2>
         <span class="badge badge-red">Automated Grading Autopsy</span>
       </div>
 
@@ -324,32 +401,44 @@
       <div class="audit-comparison-grid">
         <!-- The Common Mistake -->
         <div class="comp-pane bad">
-          <h4><span>❌</span> Common Student Response (Low Token Density &amp; Traps)</h4>
+          <h4>
+            <span class="status-indicator-badge status-bad">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              FLAGGED MISTAKE
+            </span>
+            Common Student Response (Low Token Density &amp; Traps)
+          </h4>
           <p><em>"In our enrollment project, before a student can start picking their classes, they obviously have to finish taking their high school tests and get accepted into Saint Louis University through the admission office. Also, the data diagram shows how the student clicks the button on the screen and then the data goes from the student form directly into the database table so it saves. If they don't have internet, the system will just crash and they retry."</em></p>
           <hr style="border: none; border-top: 1px dashed #fca5a5; margin: 12px 0;">
-          <div style="font-size: 0.78rem; color: #991b1b; line-height: 1.4;">
+          <div style="font-size: 0.78rem; color: #991b1b; line-height: 1.5;">
             <strong>System Autopsy:</strong>
-            <ul>
-              <li>❌ <strong>Fatal Precondition Violation:</strong> Listed "high school tests" and "admission" as preconditions. These are real-world events outside the enrollment software boundary. (Violation: Out-of-Bounds Precondition).</li>
-              <li>❌ <strong>Mortal Sin #3:</strong> Described data going "directly from form into database" (Entity to Data Store directly). (Violation: Mortal Sin #3).</li>
-              <li>❌ <strong>UI Ban Violation:</strong> Mentioned "student clicks the button on the screen". UI details are strictly banned in analysis use cases. (Violation: Premature UI Coupling).</li>
-              <li>❌ <strong>Zero Canonical Tokens:</strong> Missed <em>"internal system state", "action verb-object pair", "encapsulation", "conservation of data"</em>.</li>
+            <ul class="audit-autopsy-list">
+              <li><span class="audit-bullet-fail"><svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span> <strong>Fatal Precondition Violation:</strong> Listed "high school tests" and "admission" as preconditions. These are real-world events outside the enrollment software boundary. (Violation: Out-of-Bounds Precondition).</li>
+              <li><span class="audit-bullet-fail"><svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span> <strong>Mortal Sin #3:</strong> Described data going "directly from form into database" (Entity to Data Store directly). (Violation: Mortal Sin #3).</li>
+              <li><span class="audit-bullet-fail"><svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span> <strong>UI Ban Violation:</strong> Mentioned "student clicks the button on the screen". UI details are strictly banned in analysis use cases. (Violation: Premature UI Coupling).</li>
+              <li><span class="audit-bullet-fail"><svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span> <strong>Zero Canonical Tokens:</strong> Missed <em>"internal system state", "action verb-object pair", "encapsulation", "conservation of data"</em>.</li>
             </ul>
           </div>
         </div>
 
         <!-- The Exemplary Blueprint -->
         <div class="comp-pane good">
-          <h4><span>✔️</span> Systems Analyst Response (Full Token Density &amp; Syntax)</h4>
+          <h4>
+            <span class="status-indicator-badge status-good">
+              <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+              ARCHITECTURAL BENCHMARK
+            </span>
+            Systems Analyst Response (Full Token Density &amp; Syntax)
+          </h4>
           <p><em>"In UML behavioral modeling, <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">Use Case</span> specifications mandate that <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">preconditions</span> must represent <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">internal system states</span> set strictly <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">inside the software boundary</span> (e.g., authenticated student session). Real-world events like admission are external <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">assumptions</span>. Furthermore, in <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">process modeling</span>, <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">Mortal Sin #3</span> prohibits direct flows between <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">external entities and data stores</span>; all writes must be mediated by a <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">process bubble</span> with an <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">action verb-object pair</span> to maintain <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">data encapsulation</span>. In accordance with the analysis phase rules, <span style="background: #dbeafe; color: #1e40af; font-weight: bold; padding: 1px 4px; border-radius: 3px;">user interface details are omitted</span>."</em></p>
           <hr style="border: none; border-top: 1px dashed #86efac; margin: 12px 0;">
-          <div style="font-size: 0.78rem; color: #166534; line-height: 1.4;">
+          <div style="font-size: 0.78rem; color: #166534; line-height: 1.5;">
             <strong>System Autopsy:</strong>
-            <ul>
-              <li>✔️ <strong>100% Token Density:</strong> Matched 12 out of 12 required regex tokens in just 85 words.</li>
-              <li>✔️ <strong>Zero Traps Triggered:</strong> Correctly differentiated assumptions vs. preconditions.</li>
-              <li>✔️ <strong>Explicit Architectural Rationale:</strong> Cited encapsulation, boundaries, and syntax rules.</li>
-              <li>✔️ <strong>Evaluation:</strong> Verified Exemplary Architecture Response.</li>
+            <ul class="audit-autopsy-list">
+              <li><span class="audit-bullet-pass"><svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span> <strong>100% Token Density:</strong> Matched 12 out of 12 required regex tokens in just 85 words.</li>
+              <li><span class="audit-bullet-pass"><svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span> <strong>Zero Traps Triggered:</strong> Correctly differentiated assumptions vs. preconditions.</li>
+              <li><span class="audit-bullet-pass"><svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span> <strong>Explicit Architectural Rationale:</strong> Cited encapsulation, boundaries, and syntax rules.</li>
+              <li><span class="audit-bullet-pass"><svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span> <strong>Evaluation:</strong> Verified Exemplary Architecture Response.</li>
             </ul>
           </div>
         </div>
@@ -363,7 +452,10 @@
 <div id="app-modal" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-header">
-      <h3 id="modal-title"><span>🔗</span> Create Data Flow</h3>
+      <h3 id="modal-title">
+        <svg class="ui-icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <span>Create Data Flow</span>
+      </h3>
       <button class="modal-close-btn" onclick="closeAppModal()" aria-label="Close modal">&times;</button>
     </div>
     <div class="modal-body">

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * IT 211 RAM • Interactive DFD Canvas Engine & Mortal Sin Linter
  * Enhanced with Custom UI Modal, Toast Notifications, and Precise Arrow Geometries
  */
@@ -254,7 +254,7 @@ function setCanvasMode(mode) {
   if (svg) svg.setAttribute('data-mode', mode);
 
   const statusMap = {
-    move: "Mode: Select & Drag Elements (💡 Tip: Double-click any element or flow to rename/edit)",
+    move: "Mode: Select & Drag Elements (Double-click any element or flow to edit/rename)",
     connect: "Mode: Click SOURCE element (Output), then click TARGET element (Input)",
     edit: "Mode: Click any Process, Entity, Data Store, or Flow arrow to edit / rename",
     delete: "Mode: Click any element or flow to delete"
@@ -598,7 +598,7 @@ function renderDfd() {
       text.setAttribute("font-size", "9");
       text.setAttribute("font-weight", "800");
       text.setAttribute("text-anchor", "middle");
-      text.textContent = `${labelText} ➔`;
+      text.textContent = `${labelText} \u2192`;
       labelGroup.appendChild(text);
 
       labelGroup.addEventListener('click', (e) => {
@@ -611,7 +611,7 @@ function renderDfd() {
         } else if (currentCanvasMode === 'edit') {
           openEditFlowModal(c);
         } else {
-          showToast(`Flow [${c.label}]: Output from ${fromNode.name} ➔ Input to ${toNode.name}${c.desc ? ' (' + c.desc + ')' : ''}`, 'info');
+          showToast(`Flow [${c.label}]: Output from ${fromNode.name} \u2192 Input to ${toNode.name}${c.desc ? ' (' + c.desc + ')' : ''}`, 'info');
         }
       });
 
@@ -637,7 +637,7 @@ function renderDfd() {
       outBadge.setAttribute("font-size", "7.5");
       outBadge.setAttribute("font-weight", "bold");
       outBadge.setAttribute("text-anchor", "middle");
-      outBadge.textContent = "📤 OUT";
+      outBadge.textContent = "OUT";
       flowGroup.appendChild(outBadge);
 
       // 6. Input badge on last segment
@@ -655,13 +655,13 @@ function renderDfd() {
       inBadge.setAttribute("font-size", "7.5");
       inBadge.setAttribute("font-weight", "bold");
       inBadge.setAttribute("text-anchor", "middle");
-      inBadge.textContent = "📥 IN";
+      inBadge.textContent = "IN";
       flowGroup.appendChild(inBadge);
     }
 
     // Hover tooltip for data flow (shows name, endpoints, and optional description)
     const flowTitle = document.createElementNS("http://www.w3.org/2000/svg", "title");
-    flowTitle.textContent = `Flow: ${c.label} (${fromNode.name} ➔ ${toNode.name})${c.desc ? '\nDescription: ' + c.desc : ''}\n• Click wire to add bend points (Arduino style)\n• Drag points to bend arrow\n• Double-click point to remove`;
+    flowTitle.textContent = `Flow: ${c.label} (${fromNode.name} -> ${toNode.name})${c.desc ? '\nDescription: ' + c.desc : ''}\n• Click wire to add bend points (Arduino style)\n• Drag points to bend arrow\n• Double-click point to remove`;
     flowGroup.appendChild(flowTitle);
 
     connGroup.appendChild(flowGroup);
@@ -1187,7 +1187,7 @@ function onNodeClick(e, node) {
             desc: flowDesc || ""
           });
           selectedNodeForConnection = null;
-          document.getElementById('canvas-status').innerText = `Connected: ${fromNode.name} ➔ ${toNode.name}`;
+          document.getElementById('canvas-status').innerText = `Connected: ${fromNode.name} -> ${toNode.name}`;
           renderDfd();
           auditDfdDiagram();
           showToast(`Data Flow Created: [${flowName}]`, "success");
@@ -1259,7 +1259,7 @@ function openEditNodeModal(node) {
     if (descLabel) descLabel.innerText = "Data Stored / Schema Description (Optional):";
   }
 
-  title.innerHTML = `<span>✏️</span> Edit ${typeLabel}: ${node.name}`;
+  title.innerHTML = `<svg class="ui-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span>Edit ${typeLabel}: ${node.name}</span>`;
   if (nameLabel) nameLabel.innerText = `${typeLabel} Name / Identifier:`;
   input.value = node.name;
   if (descInput) descInput.value = node.desc || "";
@@ -1290,7 +1290,7 @@ function openEditNodeModal(node) {
     closeAppModal();
     renderDfd();
     auditDfdDiagram();
-    showToast(`Updated ${typeLabel}: "${oldName}" ➔ "${newName}"`, 'success');
+    showToast(`Updated ${typeLabel}: "${oldName}" -> "${newName}"`, 'success');
   };
 
   confirmBtn.onclick = onConfirm;
@@ -1341,13 +1341,13 @@ function openEditFlowModal(c) {
   const fromName = fromNode ? fromNode.name : "Source";
   const toName = toNode ? toNode.name : "Target";
 
-  title.innerHTML = `<span>✏️</span> Edit Data Flow: ${c.label}`;
+  title.innerHTML = `<svg class="ui-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span>Edit Data Flow: ${c.label}</span>`;
   if (nameLabel) nameLabel.innerText = "Data Flow Label (Noun Phrase):";
   input.value = c.label;
   if (descInput) descInput.value = c.desc || "";
   if (descLabel) descLabel.innerText = "Data Payload Description / Fields (Optional):";
 
-  helpText.innerHTML = `<strong>Data Flow Rule:</strong> Flow represents data in motion from <strong>[${fromName}]</strong> (Output) ➔ <strong>[${toName}]</strong> (Input). Must be a <strong>noun phrase</strong> describing the data packet.`;
+  helpText.innerHTML = `<strong>Data Flow Rule:</strong> Flow represents data in motion from <strong>[${fromName}]</strong> (Output) -> <strong>[${toName}]</strong> (Input). Must be a <strong>noun phrase</strong> describing the data packet.`;
   if (chipsHeader) chipsHeader.innerText = "Quick Suggestions for Data Flow:";
 
   if (extraBox) {
@@ -1355,7 +1355,8 @@ function openEditFlowModal(c) {
       extraBox.style.display = 'block';
       extraBox.innerHTML = `
         <button type="button" class="btn btn-outline" style="width: 100%; font-size: 0.76rem;" onclick="straightenCurrentFlow()">
-          🔄 Straighten Arrow (Remove All ${c.waypoints.length} Bend Point${c.waypoints.length > 1 ? 's' : ''})
+          <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          Straighten Arrow (Remove All ${c.waypoints.length} Bend Point${c.waypoints.length > 1 ? 's' : ''})
         </button>
       `;
     } else {
@@ -1402,7 +1403,7 @@ function openEditFlowModal(c) {
     closeAppModal();
     renderDfd();
     auditDfdDiagram();
-    showToast(`Updated Data Flow: "${oldLabel}" ➔ "${newLabel}"`, 'success');
+    showToast(`Updated Data Flow: "${oldLabel}" -> "${newLabel}"`, 'success');
   };
 
   confirmBtn.onclick = onConfirm;
@@ -1447,7 +1448,7 @@ function openDataFlowModal(fromNode, toNode, callback) {
   const helpText = document.getElementById('modal-desc');
   const confirmBtn = document.getElementById('modal-confirm-btn');
 
-  title.innerHTML = `<span>🔗</span> Create Data Flow`;
+  title.innerHTML = `<svg class="ui-icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> <span>Create Data Flow</span>`;
   if (nameLabel) nameLabel.innerText = "Data Flow Label (Noun Phrase):";
   input.value = "Data_Flow";
   if (descInput) descInput.value = "";
@@ -1538,9 +1539,16 @@ function showToast(message, type = "info") {
   const container = document.getElementById('toast-container');
   if (!container) return;
 
+  const iconSvg = {
+    success: `<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="#22c55e"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`,
+    danger: `<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="#ef4444"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+    warning: `<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="#f59e0b"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+    info: `<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="#38bdf8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+  }[type] || `<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="#38bdf8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-  toast.innerHTML = `<span>${type === 'success' ? '✔️' : type === 'danger' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</span> ${message}`;
+  toast.innerHTML = `${iconSvg} <span>${message}</span>`;
 
   container.appendChild(toast);
 
@@ -1677,7 +1685,10 @@ function auditDfdDiagram() {
     verdictDesc.innerText = "Diagram satisfies conservation of data and complies with all syntax rules.";
     sinList.innerHTML = `
       <div class="sin-card ok">
-        <h5><span>✔️</span> All 10 Mortal Sins Avoided</h5>
+        <h5 style="display: flex; align-items: center; gap: 6px;">
+          <svg class="ui-icon ui-icon-sm" style="color: var(--success);" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          All 10 Mortal Sins Avoided
+        </h5>
         <p>No direct store-to-store, entity-to-store, miracles, black holes, or recursive loops found.</p>
       </div>
     `;
@@ -1690,7 +1701,10 @@ function auditDfdDiagram() {
       const item = document.createElement('div');
       item.className = "sin-card";
       item.innerHTML = `
-        <h5><span>❌</span> ${sin.title}</h5>
+        <h5 style="display: flex; align-items: center; gap: 6px;">
+          <svg class="ui-icon ui-icon-sm" style="color: var(--danger);" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          ${sin.title}
+        </h5>
         <p>${sin.desc}</p>
       `;
       sinList.appendChild(item);

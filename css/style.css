@@ -1,9 +1,11 @@
 :root {
-  --primary: #1e40af;
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
   --primary-light: #3b82f6;
   --primary-soft: #eff6ff;
   --accent: #0284c7;
   --dark: #0f172a;
+  --navy: #1e293b;
   --slate: #334155;
   --muted: #64748b;
   --bg-page: #f8fafc;
@@ -17,11 +19,11 @@
   --warning: #d97706;
   --warning-soft: #fffbeb;
   --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
   --shadow-sm: 0 1px 3px rgba(15,23,42,0.06);
-  --shadow-md: 0 4px 14px rgba(15,23,42,0.08);
-  --shadow-lg: 0 12px 30px rgba(30,64,175,0.12);
+  --shadow-md: 0 4px 12px rgba(15,23,42,0.07);
+  --shadow-lg: 0 10px 25px rgba(15,23,42,0.10);
 }
 
 *, *::before, *::after {
@@ -38,6 +40,34 @@ body {
   display: flex;
   flex-direction: column;
   line-height: 1.5;
+}
+
+/* Inline SVG Icon System */
+.ui-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  stroke: currentColor;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.ui-icon-sm {
+  width: 14px;
+  height: 14px;
+}
+.ui-icon-lg {
+  width: 20px;
+  height: 20px;
+}
+.toast-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke-width: 2.2;
 }
 
 /* Header */
@@ -70,15 +100,19 @@ header.app-header {
 .brand-logo {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #1e3a8a, #0284c7);
+  border-radius: 10px;
+  background: #1e3a8a;
+  border: 1px solid #1e40af;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: 800;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 12px rgba(2,132,199,0.3);
+  box-shadow: 0 2px 6px rgba(30, 58, 138, 0.2);
+}
+
+.brand-logo svg {
+  width: 24px;
+  height: 24px;
 }
 
 .brand-text h1 {
@@ -213,15 +247,17 @@ main.app-container {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #1d4ed8, #0284c7);
+  background: var(--primary);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(2,132,199,0.3);
+  border: 1px solid var(--primary);
+  box-shadow: 0 1px 3px rgba(29, 78, 216, 0.25);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #1e40af, #0369a1);
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(2,132,199,0.4);
+  box-shadow: 0 3px 8px rgba(29, 78, 216, 0.35);
 }
 
 .btn-outline {
@@ -461,19 +497,31 @@ textarea.essay-input:focus {
   transform: translateX(3px);
 }
 
-.shape-preview {
-  width: 30px;
-  height: 30px;
+.shape-preview-svg {
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #ffffff;
-  border: 1.5px solid var(--slate);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  flex-shrink: 0;
+  padding: 2px;
+  transition: all 0.2s ease;
 }
 
-.shape-preview.process-gs { border-radius: 6px; border-top: 4px solid var(--slate); }
-.shape-preview.entity { border-radius: 2px; }
-.shape-preview.store-gs { border-right: none; border-left: 4px solid var(--slate); }
+.shape-item:hover .shape-preview-svg {
+  border-color: var(--primary);
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.15);
+  background: #ffffff;
+}
+
+.shape-preview-svg svg {
+  width: 30px;
+  height: 30px;
+  display: block;
+}
 
 .dfd-canvas-container {
   background: #ffffff;
@@ -789,6 +837,59 @@ textarea.essay-input:focus {
 .comp-pane.bad h4 { color: var(--danger); }
 .comp-pane.good h4 { color: var(--success); }
 .comp-pane p { font-size: 0.85rem; line-height: 1.55; }
+
+.status-indicator-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.status-indicator-badge.status-bad {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.status-indicator-badge.status-good {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.audit-autopsy-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.audit-autopsy-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.45;
+}
+
+.audit-bullet-fail {
+  color: #dc2626;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.audit-bullet-pass {
+  color: #16a34a;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
