@@ -241,6 +241,10 @@ function randomCard() {
 // Window load init
 window.addEventListener('DOMContentLoaded', () => {
   loadRandomQuestion();
-  loadPerfectDfdPreset();
+  if (typeof checkUrlHashForSharedDiagram === 'function' && checkUrlHashForSharedDiagram()) {
+    // Loaded shared diagram from URL hash
+  } else {
+    loadPerfectDfdPreset();
+  }
   showCard();
 });

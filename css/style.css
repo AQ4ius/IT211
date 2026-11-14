@@ -1492,6 +1492,88 @@ textarea.essay-input:focus {
   margin-top: 1px;
 }
 
+/* ========================================================
+   CANVAS ACTION & UNDO/REDO CONTROLS
+   ======================================================== */
+.canvas-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.canvas-action-btn {
+  background: transparent;
+  border: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--navy);
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+
+.canvas-action-btn:hover:not(:disabled) {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.canvas-action-btn:disabled,
+.canvas-action-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ========================================================
+   SAVE & SHARE MODAL STYLES (No Account Needed)
+   ======================================================== */
+.save-share-modal-box {
+  max-width: 620px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.save-share-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.save-share-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 3px 6px rgba(15, 23, 42, 0.06);
+}
+
+.save-share-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.save-share-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 @media (max-width: 480px) {
   .canvas-svg-board {
     min-height: 290px;

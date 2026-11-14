@@ -11,6 +11,14 @@ let draggedNode = null;
 let dragOffset = { x: 0, y: 0 };
 let activeModalCallback = null;
 
+// History (Undo / Redo) Management
+let dfdUndoStack = [];
+let dfdRedoStack = [];
+const MAX_UNDO_STACK = 50;
+let isPerformingUndoRedo = false;
+let nodeDragStartPos = null;
+let waypointDragStartPos = null;
+
 // Canvas Zoom & Pan State
 const BASE_VIEW_WIDTH = 760;
 const BASE_VIEW_HEIGHT = 480;
@@ -272,6 +280,8 @@ function startDraggingWaypoint(e, connection, index) {
   e.preventDefault();
   e.stopPropagation();
   draggedWaypoint = { connection, index };
+  const wp = connection.waypoints[index];
+  waypointDragStartPos = wp ? { x: wp.x, y: wp.y } : null;
   window.addEventListener('mousemove', onWaypointMouseMove);
   window.addEventListener('mouseup', onWaypointMouseUp);
 }
@@ -311,7 +321,12 @@ function onWaypointMouseMove(e) {
 
 function onWaypointMouseUp() {
   if (draggedWaypoint) {
+    const wp = draggedWaypoint.connection.waypoints[draggedWaypoint.index];
+    if (wp && waypointDragStartPos && Math.hypot(wp.x - waypointDragStartPos.x, wp.y - waypointDragStartPos.y) > 3) {
+      saveDfdStateToHistory("Bend Wire");
+    }
     draggedWaypoint = null;
+    waypointDragStartPos = null;
     window.removeEventListener('mousemove', onWaypointMouseMove);
     window.removeEventListener('mouseup', onWaypointMouseUp);
     auditDfdDiagram();
@@ -322,6 +337,8 @@ function startDraggingWaypointTouch(e, connection, index) {
   e.preventDefault();
   e.stopPropagation();
   draggedWaypoint = { connection, index };
+  const wp = connection.waypoints[index];
+  waypointDragStartPos = wp ? { x: wp.x, y: wp.y } : null;
   window.addEventListener('touchmove', onWaypointTouchMove, { passive: false });
   window.addEventListener('touchend', onWaypointTouchEnd);
   window.addEventListener('touchcancel', onWaypointTouchEnd);
@@ -363,7 +380,12 @@ function onWaypointTouchMove(e) {
 
 function onWaypointTouchEnd() {
   if (draggedWaypoint) {
+    const wp = draggedWaypoint.connection.waypoints[draggedWaypoint.index];
+    if (wp && waypointDragStartPos && Math.hypot(wp.x - waypointDragStartPos.x, wp.y - waypointDragStartPos.y) > 3) {
+      saveDfdStateToHistory("Bend Wire");
+    }
     draggedWaypoint = null;
+    waypointDragStartPos = null;
     window.removeEventListener('touchmove', onWaypointTouchMove);
     window.removeEventListener('touchend', onWaypointTouchEnd);
     window.removeEventListener('touchcancel', onWaypointTouchEnd);
@@ -376,6 +398,8 @@ function straightenCurrentFlow() {
     currentEditingFlow.waypoints = [];
     closeAppModal();
     renderDfd();
+    auditDfdDiagram();
+    saveDfdStateToHistory("Straighten Arrow");
     showToast("Arrow straightened (all bend points removed)", "info");
   }
 }
@@ -394,6 +418,8 @@ function addBendPointToCurrentFlow() {
   c.waypoints.push({ x: midX, y: midY });
   closeAppModal();
   renderDfd();
+  auditDfdDiagram();
+  saveDfdStateToHistory("Add Bend Point");
   showToast("Added bend point at center! Drag point to route wire.", "success");
 }
 
@@ -402,6 +428,7 @@ function resetCurrentFlowLabel() {
   currentEditingFlow.labelOffset = { x: 0, y: 0 };
   closeAppModal();
   renderDfd();
+  saveDfdStateToHistory("Reset Label Position");
   showToast("Reset label position to center", "info");
 }
 
@@ -411,6 +438,8 @@ function resetCurrentFlowAnchors() {
   currentEditingFlow.sourceAnchor = null;
   closeAppModal();
   renderDfd();
+  auditDfdDiagram();
+  saveDfdStateToHistory("Reset Arrowhead Anchors");
   showToast("Reset arrowhead and connection points to auto", "info");
 }
 
@@ -492,6 +521,7 @@ function endDraggingArrowEndpoint() {
     if (wasMoved) {
       justFinishedDragging = true;
       setTimeout(() => { justFinishedDragging = false; }, 100);
+      saveDfdStateToHistory('Move Arrowhead');
       auditDfdDiagram();
     }
   }
@@ -584,6 +614,7 @@ function endLabelDrag() {
     if (wasMoved) {
       justFinishedDragging = true;
       setTimeout(() => { justFinishedDragging = false; }, 100);
+      saveDfdStateToHistory(`Move Flow Label [${c ? c.label : ''}]`);
     }
   }
 }
@@ -639,16 +670,19 @@ function addDfdNode(type) {
   dfdNodes.push({ id, type, name, desc, x: defaultX, y: defaultY });
   renderDfd();
   auditDfdDiagram();
+  saveDfdStateToHistory(`Add ${type.toUpperCase()}: ${name}`);
   showToast(`Added ${type.toUpperCase()}: ${name}`, 'success');
 }
 
 function clearDfdCanvas() {
+  if (dfdNodes.length === 0 && dfdConnections.length === 0) return;
   dfdNodes = [];
   dfdConnections = [];
   selectedNodeForConnection = null;
   resetCanvasZoom();
   renderDfd();
   auditDfdDiagram();
+  saveDfdStateToHistory('Clear Canvas');
   showToast("Canvas cleared", "warning");
 }
 
@@ -669,6 +703,7 @@ function loadBuggyDfdPreset() {
 
   renderDfd();
   auditDfdDiagram();
+  saveDfdStateToHistory('Load Mortal Sins Preset');
   showToast("Loaded preset containing multiple Mortal Sins! Check the Linter panel.", "danger");
 }
 
@@ -695,6 +730,7 @@ function loadPerfectDfdPreset() {
 
   renderDfd();
   auditDfdDiagram();
+  saveDfdStateToHistory('Load Balanced Preset');
   showToast("Loaded textbook balanced DFD preset (Clean 100%)!", "success");
 }
 
@@ -773,10 +809,7 @@ function renderDfd() {
     flowGroup.addEventListener('click', (e) => {
       if (currentCanvasMode === 'delete') {
         e.stopPropagation();
-        dfdConnections = dfdConnections.filter(item => item.id !== c.id);
-        renderDfd();
-        auditDfdDiagram();
-        showToast("Deleted Data Flow", "warning");
+        deleteDfdConnection(c);
       }
     });
 
@@ -807,10 +840,7 @@ function renderDfd() {
       const handleLoopClick = (e) => {
         e.stopPropagation();
         if (currentCanvasMode === 'delete') {
-          dfdConnections = dfdConnections.filter(item => item.id !== c.id);
-          renderDfd();
-          auditDfdDiagram();
-          showToast("Deleted Recursive Loop Flow", "warning");
+          deleteDfdConnection(c);
         } else if (currentCanvasMode === 'edit') {
           openEditFlowModal(c);
         }
@@ -905,10 +935,7 @@ function renderDfd() {
       hitbox.addEventListener('mousedown', (e) => {
         e.stopPropagation();
         if (currentCanvasMode === 'delete') {
-          dfdConnections = dfdConnections.filter(item => item.id !== c.id);
-          renderDfd();
-          auditDfdDiagram();
-          showToast("Deleted Data Flow", "warning");
+          deleteDfdConnection(c);
           return;
         }
         if (currentCanvasMode === 'edit') {
@@ -938,6 +965,8 @@ function renderDfd() {
         const newWp = { x: Math.round(svgPt.x), y: Math.round(svgPt.y) };
         c.waypoints.splice(bestIdx, 0, newWp);
         renderDfd();
+        auditDfdDiagram();
+        saveDfdStateToHistory("Add Bend Point");
         startDraggingWaypoint(e, c, bestIdx);
         showToast("Added bend point! Drag to route wire.", "info");
       });
@@ -946,10 +975,7 @@ function renderDfd() {
         if (e.touches.length > 1) return;
         e.stopPropagation();
         if (currentCanvasMode === 'delete') {
-          dfdConnections = dfdConnections.filter(item => item.id !== c.id);
-          renderDfd();
-          auditDfdDiagram();
-          showToast("Deleted Data Flow", "warning");
+          deleteDfdConnection(c);
           return;
         }
         if (currentCanvasMode === 'edit') {
@@ -979,6 +1005,8 @@ function renderDfd() {
         const newWp = { x: Math.round(svgPt.x), y: Math.round(svgPt.y) };
         c.waypoints.splice(bestIdx, 0, newWp);
         renderDfd();
+        auditDfdDiagram();
+        saveDfdStateToHistory("Add Bend Point");
         startDraggingWaypointTouch(e, c, bestIdx);
         showToast("Added bend point! Drag to route wire.", "info");
       }, { passive: false });
@@ -1028,6 +1056,8 @@ function renderDfd() {
           if (currentCanvasMode === 'delete') {
             c.waypoints.splice(wpIdx, 1);
             renderDfd();
+            auditDfdDiagram();
+            saveDfdStateToHistory("Remove Bend Point");
             showToast("Removed bend point", "warning");
             return;
           }
@@ -1038,6 +1068,8 @@ function renderDfd() {
           e.stopPropagation();
           c.waypoints.splice(wpIdx, 1);
           renderDfd();
+          auditDfdDiagram();
+          saveDfdStateToHistory("Remove Bend Point");
           showToast("Removed bend point", "warning");
         });
 
@@ -1046,6 +1078,8 @@ function renderDfd() {
           e.stopPropagation();
           c.waypoints.splice(wpIdx, 1);
           renderDfd();
+          auditDfdDiagram();
+          saveDfdStateToHistory("Remove Bend Point");
           showToast("Removed bend point", "warning");
         });
 
@@ -1173,10 +1207,7 @@ function renderDfd() {
         e.stopPropagation();
         if (justFinishedDragging) return;
         if (currentCanvasMode === 'delete') {
-          dfdConnections = dfdConnections.filter(item => item.id !== c.id);
-          renderDfd();
-          auditDfdDiagram();
-          showToast("Deleted Data Flow", "warning");
+          deleteDfdConnection(c);
         } else if (currentCanvasMode === 'edit') {
           openEditFlowModal(c);
         }
@@ -1643,6 +1674,7 @@ function onNodeMouseDown(e, node) {
   e.preventDefault();
   e.stopPropagation();
   draggedNode = node;
+  nodeDragStartPos = { x: node.x, y: node.y };
   const svg = document.getElementById('dfd-svg');
   const svgPt = getSvgCoords(svg, e.clientX, e.clientY);
   dragOffset.x = svgPt.x - node.x;
@@ -1662,7 +1694,14 @@ function onNodeMouseMove(e) {
 }
 
 function onNodeMouseUp() {
+  if (draggedNode && nodeDragStartPos) {
+    if (Math.hypot(draggedNode.x - nodeDragStartPos.x, draggedNode.y - nodeDragStartPos.y) > 3) {
+      saveDfdStateToHistory(`Move ${draggedNode.name}`);
+      auditDfdDiagram();
+    }
+  }
   draggedNode = null;
+  nodeDragStartPos = null;
   window.removeEventListener('mousemove', onNodeMouseMove);
   window.removeEventListener('mouseup', onNodeMouseUp);
 }
@@ -1673,6 +1712,7 @@ function onNodeTouchStart(e, node) {
     if (e.cancelable) e.preventDefault();
     e.stopPropagation();
     draggedNode = node;
+    nodeDragStartPos = { x: node.x, y: node.y };
     const touch = e.touches[0];
     const svg = document.getElementById('dfd-svg');
     const svgPt = getSvgCoords(svg, touch.clientX, touch.clientY);
@@ -1697,7 +1737,14 @@ function onNodeTouchMove(e) {
 }
 
 function onNodeTouchEnd() {
+  if (draggedNode && nodeDragStartPos) {
+    if (Math.hypot(draggedNode.x - nodeDragStartPos.x, draggedNode.y - nodeDragStartPos.y) > 3) {
+      saveDfdStateToHistory(`Move ${draggedNode.name}`);
+      auditDfdDiagram();
+    }
+  }
   draggedNode = null;
+  nodeDragStartPos = null;
   window.removeEventListener('touchmove', onNodeTouchMove);
   window.removeEventListener('touchend', onNodeTouchEnd);
   window.removeEventListener('touchcancel', onNodeTouchEnd);
@@ -1707,11 +1754,13 @@ function onNodeClick(e, node) {
   e.stopPropagation();
 
   if (currentCanvasMode === 'delete') {
+    const deletedName = node.name;
     dfdNodes = dfdNodes.filter(n => n.id !== node.id);
     dfdConnections = dfdConnections.filter(c => c.from !== node.id && c.to !== node.id);
     renderDfd();
     auditDfdDiagram();
-    showToast(`Deleted ${node.name}`, "warning");
+    saveDfdStateToHistory(`Delete ${deletedName}`);
+    showToast(`Deleted ${deletedName}`, "warning");
     return;
   }
 
@@ -1742,6 +1791,7 @@ function onNodeClick(e, node) {
         document.getElementById('canvas-status').innerText = "Data flow created. Auditing architecture...";
         renderDfd();
         auditDfdDiagram();
+        saveDfdStateToHistory("Add Recursive Loop");
         showToast("Created recursive loop flow (Mortal Sin #9)", "danger");
       } else {
         // Open Custom In-App Modal
@@ -1757,6 +1807,7 @@ function onNodeClick(e, node) {
           document.getElementById('canvas-status').innerText = `Connected: ${fromNode.name} -> ${toNode.name}`;
           renderDfd();
           auditDfdDiagram();
+          saveDfdStateToHistory(`Add Flow [${flowName || 'Data_Flow'}]`);
           showToast(`Data Flow Created: [${flowName}]`, "success");
         });
       }
@@ -1857,6 +1908,7 @@ function openEditNodeModal(node) {
     closeAppModal();
     renderDfd();
     auditDfdDiagram();
+    saveDfdStateToHistory(`Edit ${typeLabel}: ${newName}`);
     showToast(`Updated ${typeLabel}: "${oldName}" -> "${newName}"`, 'success');
   };
 
@@ -1996,6 +2048,7 @@ function openEditFlowModal(c) {
     closeAppModal();
     renderDfd();
     auditDfdDiagram();
+    saveDfdStateToHistory(`Edit Flow [${newLabel}]`);
     showToast(`Updated Data Flow: "${oldLabel}" -> "${newLabel}"`, 'success');
   };
 
@@ -2655,3 +2708,410 @@ function renderAvoidRules() {
     </div>
   `).join("");
 }
+
+/* ========================================================
+   CONNECTION DELETION HELPER
+   ======================================================== */
+function deleteDfdConnection(c) {
+  const label = c.label || "Data_Flow";
+  dfdConnections = dfdConnections.filter(item => item.id !== c.id);
+  renderDfd();
+  auditDfdDiagram();
+  saveDfdStateToHistory(`Delete Flow [${label}]`);
+  showToast("Deleted Data Flow", "warning");
+}
+
+/* ========================================================
+   HISTORY MANAGER: UNDO & REDO
+   ======================================================== */
+function saveDfdStateToHistory(label = 'Action') {
+  if (isPerformingUndoRedo) return;
+  const snapshot = JSON.stringify({
+    nodes: dfdNodes,
+    connections: dfdConnections
+  });
+
+  // Prevent consecutive duplicate states
+  if (dfdUndoStack.length > 0 && dfdUndoStack[dfdUndoStack.length - 1].state === snapshot) {
+    return;
+  }
+
+  dfdUndoStack.push({
+    label: label || 'Action',
+    state: snapshot,
+    timestamp: Date.now()
+  });
+
+  if (dfdUndoStack.length > MAX_UNDO_STACK) {
+    dfdUndoStack.shift();
+  }
+
+  // Clear redo stack on new action
+  dfdRedoStack = [];
+  updateUndoRedoUI();
+  autoSaveDfdToStorage();
+}
+
+function undoDfdAction() {
+  if (dfdUndoStack.length <= 1) {
+    showToast("Nothing to undo", "info");
+    return;
+  }
+  isPerformingUndoRedo = true;
+  const currentItem = dfdUndoStack.pop();
+  dfdRedoStack.push(currentItem);
+
+  const prevItem = dfdUndoStack[dfdUndoStack.length - 1];
+  try {
+    const data = JSON.parse(prevItem.state);
+    dfdNodes = data.nodes || [];
+    dfdConnections = data.connections || [];
+    selectedNodeForConnection = null;
+    renderDfd();
+    auditDfdDiagram();
+    showToast(`Undo: ${currentItem.label}`, "info");
+  } catch (err) {
+    console.error("Undo error", err);
+  } finally {
+    isPerformingUndoRedo = false;
+    updateUndoRedoUI();
+    autoSaveDfdToStorage();
+  }
+}
+
+function redoDfdAction() {
+  if (dfdRedoStack.length === 0) {
+    showToast("Nothing to redo", "info");
+    return;
+  }
+  isPerformingUndoRedo = true;
+  const nextItem = dfdRedoStack.pop();
+  dfdUndoStack.push(nextItem);
+
+  try {
+    const data = JSON.parse(nextItem.state);
+    dfdNodes = data.nodes || [];
+    dfdConnections = data.connections || [];
+    selectedNodeForConnection = null;
+    renderDfd();
+    auditDfdDiagram();
+    showToast(`Redo: ${nextItem.label}`, "info");
+  } catch (err) {
+    console.error("Redo error", err);
+  } finally {
+    isPerformingUndoRedo = false;
+    updateUndoRedoUI();
+    autoSaveDfdToStorage();
+  }
+}
+
+function updateUndoRedoUI() {
+  const undoBtn = document.getElementById('btn-undo');
+  const redoBtn = document.getElementById('btn-redo');
+  if (undoBtn) {
+    const canUndo = dfdUndoStack.length > 1;
+    undoBtn.disabled = !canUndo;
+    undoBtn.classList.toggle('disabled', !canUndo);
+  }
+  if (redoBtn) {
+    const canRedo = dfdRedoStack.length > 0;
+    redoBtn.disabled = !canRedo;
+    redoBtn.classList.toggle('disabled', !canRedo);
+  }
+}
+
+/* ========================================================
+   SAVE & SHARE DFD (ZERO-ACCOUNT COMPRESSION & LINK GENERATOR)
+   ======================================================== */
+function getDfdExportData() {
+  const scenarioVal = document.getElementById('scenario-selector')?.value || 'pos';
+  return {
+    version: 1,
+    app: "IT211_BallsRUs_DFD",
+    scenario: scenarioVal,
+    timestamp: Date.now(),
+    nodes: dfdNodes.map(n => ({
+      id: n.id,
+      type: n.type,
+      name: n.name,
+      desc: n.desc || "",
+      x: n.x,
+      y: n.y
+    })),
+    connections: dfdConnections.map(c => ({
+      id: c.id,
+      from: c.from,
+      to: c.to,
+      label: c.label || "",
+      desc: c.desc || "",
+      waypoints: Array.isArray(c.waypoints) ? c.waypoints : [],
+      sourceAnchor: c.sourceAnchor || null,
+      targetAnchor: c.targetAnchor || null,
+      labelOffset: c.labelOffset || null
+    }))
+  };
+}
+
+function encodeDfdToCode(data) {
+  try {
+    const jsonStr = JSON.stringify(data);
+    const encoded = encodeURIComponent(jsonStr);
+    return "DFD-" + btoa(encoded);
+  } catch (err) {
+    console.error("Encoding error:", err);
+    return "";
+  }
+}
+
+function decodeDfdFromCode(codeStr) {
+  if (!codeStr || typeof codeStr !== 'string') throw new Error("Empty code provided");
+  let raw = codeStr.trim();
+  
+  // Extract hash parameter if full link was pasted
+  const hashIdx = raw.indexOf('#dfd=');
+  if (hashIdx !== -1) {
+    raw = raw.substring(hashIdx + 5);
+  }
+  const shareIdx = raw.indexOf('#share=');
+  if (shareIdx !== -1) {
+    raw = raw.substring(shareIdx + 7);
+  }
+  const queryIdx = raw.indexOf('?dfd=');
+  if (queryIdx !== -1) {
+    raw = raw.substring(queryIdx + 5);
+  }
+
+  // Strip DFD- prefix if present
+  if (raw.startsWith('DFD-')) {
+    raw = raw.substring(4);
+  }
+
+  raw = decodeURIComponent(raw);
+
+  // If raw JSON string was pasted directly
+  if (raw.startsWith('{')) {
+    return JSON.parse(raw);
+  }
+
+  // Base64 decode
+  const binaryStr = atob(raw);
+  const jsonStr = decodeURIComponent(binaryStr);
+  return JSON.parse(jsonStr);
+}
+
+function openSaveShareModal() {
+  const modal = document.getElementById('save-share-modal');
+  if (!modal) return;
+
+  const data = getDfdExportData();
+  const code = encodeDfdToCode(data);
+  const cleanUrl = window.location.origin + window.location.pathname + '#dfd=' + encodeURIComponent(code);
+
+  const linkInput = document.getElementById('share-link-input');
+  const codeInput = document.getElementById('share-code-input');
+  const importInput = document.getElementById('import-code-input');
+
+  if (linkInput) linkInput.value = cleanUrl;
+  if (codeInput) codeInput.value = code;
+  if (importInput) importInput.value = '';
+
+  modal.classList.add('active');
+}
+
+function closeSaveShareModal() {
+  const modal = document.getElementById('save-share-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function copyShareLink() {
+  const linkInput = document.getElementById('share-link-input');
+  if (!linkInput) return;
+  linkInput.select();
+  navigator.clipboard.writeText(linkInput.value).then(() => {
+    showToast("Shareable link copied to clipboard!", "success");
+  }).catch(() => {
+    document.execCommand('copy');
+    showToast("Shareable link copied to clipboard!", "success");
+  });
+}
+
+function copyDiagramCode() {
+  const codeInput = document.getElementById('share-code-input');
+  if (!codeInput) return;
+  codeInput.select();
+  navigator.clipboard.writeText(codeInput.value).then(() => {
+    showToast("Diagram code copied to clipboard!", "success");
+  }).catch(() => {
+    document.execCommand('copy');
+    showToast("Diagram code copied to clipboard!", "success");
+  });
+}
+
+function loadDiagramFromInput() {
+  const input = document.getElementById('import-code-input');
+  if (!input || !input.value.trim()) {
+    showToast("Please paste a shared link, code, or JSON first", "warning");
+    return;
+  }
+  try {
+    const parsed = decodeDfdFromCode(input.value.trim());
+    if (!parsed || (!parsed.nodes && !parsed.dfdNodes)) {
+      throw new Error("Invalid diagram structure");
+    }
+    loadDfdData(parsed, "Imported Shared Diagram");
+    closeSaveShareModal();
+    showToast(`Loaded diagram with ${dfdNodes.length} elements and ${dfdConnections.length} flows!`, "success");
+  } catch (err) {
+    showToast("Invalid link or diagram code. Please check and try again.", "danger");
+  }
+}
+
+function loadDfdData(data, sourceLabel = "Loaded Diagram") {
+  dfdNodes = (data.nodes || data.dfdNodes || []).map(n => ({
+    id: n.id || ("n_" + Math.random().toString(36).substr(2, 6)),
+    type: n.type || "process",
+    name: n.name || "Element",
+    desc: n.desc || "",
+    x: Number(n.x) || 100,
+    y: Number(n.y) || 100
+  }));
+
+  dfdConnections = (data.connections || data.dfdConnections || data.conns || []).map(c => ({
+    id: c.id || ("c_" + Math.random().toString(36).substr(2, 6)),
+    from: c.from,
+    to: c.to,
+    label: c.label || "Data_Flow",
+    desc: c.desc || "",
+    waypoints: Array.isArray(c.waypoints) ? c.waypoints : [],
+    sourceAnchor: c.sourceAnchor || null,
+    targetAnchor: c.targetAnchor || null,
+    labelOffset: c.labelOffset || null
+  }));
+
+  selectedNodeForConnection = null;
+  saveDfdStateToHistory(sourceLabel);
+  renderDfd();
+  auditDfdDiagram();
+  fitCanvasToElements();
+}
+
+function saveToBrowserStorage() {
+  try {
+    const data = getDfdExportData();
+    localStorage.setItem('ballsrus_dfd_manual_save', JSON.stringify(data));
+    showToast(`Saved snapshot to browser (${dfdNodes.length} elements, ${dfdConnections.length} flows)`, "success");
+  } catch (e) {
+    showToast("Failed to save to browser storage", "danger");
+  }
+}
+
+function loadFromBrowserStorage() {
+  try {
+    const raw = localStorage.getItem('ballsrus_dfd_manual_save') || localStorage.getItem('ballsrus_dfd_autosave');
+    if (!raw) {
+      showToast("No saved diagram found in browser storage", "info");
+      return;
+    }
+    const data = JSON.parse(raw);
+    loadDfdData(data, "Restored Browser Snapshot");
+    closeSaveShareModal();
+    showToast("Restored saved diagram from browser storage!", "success");
+  } catch (e) {
+    showToast("Error restoring saved diagram", "danger");
+  }
+}
+
+function autoSaveDfdToStorage() {
+  try {
+    const exportData = getDfdExportData();
+    localStorage.setItem('ballsrus_dfd_autosave', JSON.stringify(exportData));
+  } catch (e) {
+    // Ignore quota issues
+  }
+}
+
+function downloadDfdFile() {
+  const data = getDfdExportData();
+  const jsonStr = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `dfd-diagram-${Date.now()}.dfd`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("Downloaded .dfd diagram file!", "success");
+}
+
+function handleDfdFileUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      loadDfdData(data, "Uploaded File: " + file.name);
+      closeSaveShareModal();
+      showToast(`Loaded diagram from ${file.name}!`, "success");
+    } catch (err) {
+      showToast("Could not read diagram file. Invalid format.", "danger");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function checkUrlHashForSharedDiagram() {
+  if (window.location.hash) {
+    const hash = window.location.hash;
+    if (hash.startsWith('#dfd=') || hash.startsWith('#share=')) {
+      try {
+        const code = hash.split('=')[1];
+        if (code) {
+          const data = decodeDfdFromCode(code);
+          if (data && (data.nodes || data.dfdNodes)) {
+            loadDfdData(data, "Shared Link Diagram");
+            showToast("Successfully loaded diagram from custom link!", "success");
+            return true;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to load diagram from URL hash:", err);
+      }
+    }
+  }
+  return false;
+}
+
+// Global Keyboard Shortcuts (Undo/Redo, Save)
+window.addEventListener('keydown', (e) => {
+  const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+  if (activeTag === 'input' || activeTag === 'textarea') {
+    return;
+  }
+
+  // Ctrl+Z / Cmd+Z -> Undo or Redo (if Shift held)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+    e.preventDefault();
+    if (e.shiftKey) {
+      redoDfdAction();
+    } else {
+      undoDfdAction();
+    }
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+    e.preventDefault();
+    redoDfdAction();
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    openSaveShareModal();
+  }
+});
+
+// React to Hash Changes
+window.addEventListener('hashchange', () => {
+  if (window.location.hash.startsWith('#dfd=') || window.location.hash.startsWith('#share=')) {
+    checkUrlHashForSharedDiagram();
+  }
+});
