@@ -536,39 +536,38 @@ textarea.essay-input:focus {
 .canvas-top-bar {
   background: #f8fafc;
   border-bottom: 1px solid var(--border);
-  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas-top-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  white-space: nowrap;
-  scrollbar-width: thin;
-  scrollbar-color: #94a3b8 #f1f5f9;
-  -webkit-overflow-scrolling: touch;
+  padding: 6px 10px;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.canvas-top-bar::-webkit-scrollbar {
-  height: 6px;
+.canvas-tools-row {
+  border-bottom: 1px solid #eef2f6;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
-.canvas-top-bar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-
-.canvas-top-bar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.canvas-top-bar::-webkit-scrollbar-track {
-  background: #f1f5f9;
+.canvas-status-row {
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .canvas-mode-group {
   display: inline-flex;
-  gap: 6px;
-  flex-shrink: 0;
+  gap: 5px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .canvas-mode-btn {
@@ -577,72 +576,185 @@ textarea.essay-input:focus {
   padding: 5px 10px;
   border-radius: 6px;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   color: var(--slate);
-  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.canvas-mode-btn:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+  color: var(--navy);
 }
 
 .canvas-mode-btn.active {
   background: var(--primary);
   color: #ffffff;
   border-color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+}
+
+.canvas-mode-btn.active svg {
+  stroke: #ffffff;
 }
 
 .canvas-action-group {
   display: inline-flex;
-  gap: 4px;
-  flex-shrink: 0;
+  gap: 5px;
+  align-items: center;
 }
 
-/* Canvas Zoom Controls */
-.canvas-zoom-group {
+.canvas-tool-btn {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--slate);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.canvas-tool-btn:hover:not(:disabled) {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+  color: var(--navy);
+}
+
+.canvas-tool-btn:disabled, .canvas-tool-btn.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+/* Matching Modern Zoom Toolbar */
+.canvas-zoom-toolbar {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  background: #ffffff;
+  background: #f8fafc;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 2px 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  flex-shrink: 0;
-}
-  border-radius: 8px;
-  padding: 2px 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+  padding: 2px 5px;
 }
 
-.canvas-zoom-btn {
+.zoom-btn {
   background: transparent;
   border: none;
   font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--navy);
-  padding: 4px 7px;
-  border-radius: 5px;
+  color: var(--slate);
+  padding: 4px 6px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  user-select: none;
+  transition: all 0.15s ease;
 }
 
-.canvas-zoom-btn:hover {
-  background: var(--primary-soft);
-  color: var(--primary);
+.zoom-btn:hover {
+  background: #e2e8f0;
+  color: var(--navy);
 }
 
-.zoom-level-text {
+.zoom-text {
   font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--primary);
-  min-width: 44px;
+  font-weight: 700;
+  color: #1d4ed8;
+  min-width: 42px;
   text-align: center;
-  user-select: none;
   cursor: pointer;
-  padding: 2px 5px;
+  padding: 2px 4px;
+  user-select: none;
+}
+
+.zoom-divider {
+  width: 1px;
+  height: 16px;
+  background: #cbd5e1;
+  margin: 0 4px;
+}
+
+.zoom-btn-label {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--slate);
+  padding: 3px 8px;
   border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.zoom-btn-label:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+  color: var(--navy);
+}
+
+/* Matching Save / Share Button */
+.canvas-share-btn {
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #1d4ed8;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+  flex-shrink: 0;
+}
+
+.canvas-share-btn:hover {
+  background: #1d4ed8;
+}
+
+.canvas-share-btn svg {
+  stroke: #ffffff;
+}
+
+/* Prominent Mode & Guidance Indicator */
+.canvas-mode-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: #334155;
+  margin-left: auto;
+  max-width: 100%;
+}
+
+.canvas-mode-status-badge .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  flex-shrink: 0;
+}
   transition: background 0.15s ease;
 }
 

@@ -1680,6 +1680,7 @@ function fitCanvasToElements() {
 
 /* Background canvas panning (Mouse & Touch) */
 function onCanvasMouseDown(e) {
+  releaseAllDfdDrags();
   const isBackground = e.target.id === 'dfd-svg' ||
                        e.target.id === 'svg-connections' ||
                        e.target.id === 'svg-nodes' ||
@@ -1865,6 +1866,13 @@ function releaseAllDfdDrags() {
   if (isPanningCanvas) onCanvasMouseUp();
 }
 
+// Global safety net (capture-phase: clicking empty space kills any active drag before it can teleport)
+window.addEventListener('mousedown', (e) => {
+  if (draggedNode && !e.target.closest('.dfd-node')) {
+    releaseAllDfdDrags();
+  }
+}, true);
+
 window.addEventListener('blur', releaseAllDfdDrags);
 window.addEventListener('mouseup', releaseAllDfdDrags);
 document.addEventListener('mouseleave', releaseAllDfdDrags);
@@ -1899,16 +1907,19 @@ function onNodeMouseMove(e) {
 }
 
 function onNodeMouseUp() {
-  if (draggedNode && nodeDragStartPos) {
-    if (Math.hypot(draggedNode.x - nodeDragStartPos.x, draggedNode.y - nodeDragStartPos.y) > 3) {
-      saveDfdStateToHistory(`Move ${draggedNode.name}`);
-      auditDfdDiagram();
-    }
-  }
+  const node = draggedNode;
+  const startPos = nodeDragStartPos;
   draggedNode = null;
   nodeDragStartPos = null;
   window.removeEventListener('mousemove', onNodeMouseMove);
   window.removeEventListener('mouseup', onNodeMouseUp);
+
+  if (node && startPos) {
+    if (Math.hypot(node.x - startPos.x, node.y - startPos.y) > 3) {
+      saveDfdStateToHistory(`Move ${node.name}`);
+      auditDfdDiagram();
+    }
+  }
   renderDfd();
 }
 
@@ -1943,17 +1954,20 @@ function onNodeTouchMove(e) {
 }
 
 function onNodeTouchEnd() {
-  if (draggedNode && nodeDragStartPos) {
-    if (Math.hypot(draggedNode.x - nodeDragStartPos.x, draggedNode.y - nodeDragStartPos.y) > 3) {
-      saveDfdStateToHistory(`Move ${draggedNode.name}`);
-      auditDfdDiagram();
-    }
-  }
+  const node = draggedNode;
+  const startPos = nodeDragStartPos;
   draggedNode = null;
   nodeDragStartPos = null;
   window.removeEventListener('touchmove', onNodeTouchMove);
   window.removeEventListener('touchend', onNodeTouchEnd);
   window.removeEventListener('touchcancel', onNodeTouchEnd);
+
+  if (node && startPos) {
+    if (Math.hypot(node.x - startPos.x, node.y - startPos.y) > 3) {
+      saveDfdStateToHistory(`Move ${node.name}`);
+      auditDfdDiagram();
+    }
+  }
 }
 
 function onNodeClick(e, node) {
@@ -3206,29 +3220,44 @@ async function decodeDfdFromCode(codeStr) {
   }
 }
 
+async function generateCurrentWorkspaceShare(showToastFeedback = false) {
+  const data = getDfdExportData();
+  const code = await encodeDfdToCode(data);
+  const baseUrl = window.location.origin + window.location.pathname;
+  const cleanUrl = `${baseUrl}#dfd=${encodeURIComponent(code)}`;
+
+  const linkInput = document.getElementById('share-link-input');
+  const codeInput = document.getElementById('share-code-input');
+  const badgeEl = document.getElementById('workspace-share-badge');
+
+  if (linkInput) linkInput.value = cleanUrl;
+  if (codeInput) codeInput.value = code;
+  if (badgeEl) {
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    badgeEl.innerText = `Workspace Snapshot Ready (${dfdNodes.length} nodes, ${dfdConnections.length} flows • ${timeStr})`;
+    badgeEl.style.display = 'inline-block';
+  }
+  if (showToastFeedback) {
+    showToast(`Generated new link & code for current workspace (${dfdNodes.length} elements)!`, "success");
+  }
+}
+
 async function openSaveShareModal() {
   const modal = document.getElementById('save-share-modal');
   if (!modal) return;
 
-  const data = getDfdExportData();
   const scenarioVal = document.getElementById('scenario-selector')?.value || 'pos';
   const baseUrl = window.location.origin + window.location.pathname;
 
   // Option 1: Clean 1-Line URL (ultra-short, fits in 1 line)
   const shortPresetUrl = `${baseUrl}#preset=${scenarioVal}`;
-
-  // Option 2: Full Custom State Link & Code
-  const code = await encodeDfdToCode(data);
-  const cleanUrl = `${baseUrl}#dfd=${encodeURIComponent(code)}`;
-
   const presetLinkInput = document.getElementById('share-preset-link-input');
-  const linkInput = document.getElementById('share-link-input');
-  const codeInput = document.getElementById('share-code-input');
-  const importInput = document.getElementById('import-code-input');
-
   if (presetLinkInput) presetLinkInput.value = shortPresetUrl;
-  if (linkInput) linkInput.value = cleanUrl;
-  if (codeInput) codeInput.value = code;
+
+  // Option 2: Live Current Workspace Link & Code
+  await generateCurrentWorkspaceShare(false);
+
+  const importInput = document.getElementById('import-code-input');
   if (importInput) importInput.value = '';
 
   renderSaveSlotsUI();
