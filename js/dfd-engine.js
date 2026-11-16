@@ -47,11 +47,11 @@ const SCENARIOS = {
   },
   leasing_context: {
     title: "Property Leasing System (Context P0.0)",
-    hint: "Context Diagram: Central 0.0 system boundary interacting with 6 external entities. Strict Topic 6 rule: ZERO data stores in context."
+    hint: "Context Diagram: Central 0.0 system boundary interacting with 8 external entities (Tenants, Staff, Management, System Admin). Strict Topic 6 rule: ZERO data stores in context."
   },
   leasing_level1: {
     title: "Property Leasing System (Level 1 DFD)",
-    hint: "Level 1 DFD: 5 Core Processes (1.0 Inventory, 2.0 Applications, 3.0 Leases, 4.0 Payments, 5.0 Work Orders), 5 Data Stores (D1–D5), and 6 External Entities."
+    hint: "Level 1 DFD: 6 Processes (1.0 Inventory, 2.0 Applications, 3.0 Leases, 4.0 Payments, 5.0 Work Orders, 6.0 Security & Audit), 6 Data Stores (D1–D6), and 8 External Entities."
   }
 };
 
@@ -774,13 +774,15 @@ function loadPropertyLeasingContextPreset() {
   }
 
   dfdNodes = [
-    { id: "n1", type: "entity", name: "PROSPECTIVE TENANT", desc: "Searches available units and submits applications", x: 40, y: 50 },
-    { id: "n2", type: "entity", name: "TENANT", desc: "Active resident paying rent and filing maintenance requests", x: 40, y: 230 },
-    { id: "n3", type: "entity", name: "LEASING OFFICER", desc: "Assesses applications and drafts leases", x: 40, y: 410 },
-    { id: "n0", type: "process", name: "0.0 PROPERTY LEASING SYSTEM", desc: "To-Be Core Property Leasing, Tenant Management & Maintenance System", x: 330, y: 225 },
-    { id: "n4", type: "entity", name: "PROPERTY MANAGER", desc: "Manages property records, move-in/outs, and assigns work orders", x: 620, y: 50 },
-    { id: "n5", type: "entity", name: "ACCOUNTING PERSONNEL", desc: "Records payments and certifies move-out balance clearances", x: 620, y: 230 },
-    { id: "n6", type: "entity", name: "MAINTENANCE PERSONNEL", desc: "Performs repairs and submits materials logs", x: 620, y: 410 }
+    { id: "n1", type: "entity", name: "PROSPECTIVE TENANT", desc: "Searches available units and submits applications", x: 40, y: 40 },
+    { id: "n2", type: "entity", name: "TENANT", desc: "Active resident paying rent and filing maintenance requests", x: 40, y: 190 },
+    { id: "n3", type: "entity", name: "LEASING OFFICER", desc: "Assesses applications and drafts leases", x: 40, y: 340 },
+    { id: "n8", type: "entity", name: "SYSTEM ADMINISTRATOR", desc: "Configures system roles, user credentials, and maintains audit logs", x: 40, y: 490 },
+    { id: "n0", type: "process", name: "0.0 PROPERTY LEASING SYSTEM", desc: "To-Be Core Property Leasing, Tenant Management & Maintenance System", x: 330, y: 260 },
+    { id: "n4", type: "entity", name: "PROPERTY MANAGER", desc: "Manages property records, move-in/outs, and assigns work orders", x: 620, y: 40 },
+    { id: "n5", type: "entity", name: "ACCOUNTING PERSONNEL", desc: "Records payments and certifies move-out balance clearances", x: 620, y: 190 },
+    { id: "n6", type: "entity", name: "MAINTENANCE PERSONNEL", desc: "Performs repairs and submits materials logs", x: 620, y: 340 },
+    { id: "n7", type: "entity", name: "MANAGEMENT", desc: "Sets enterprise leasing policies, reviews performance, and audits operations", x: 620, y: 490 }
   ];
 
   dfdConnections = [
@@ -808,14 +810,18 @@ function loadPropertyLeasingContextPreset() {
     { id: "c22", from: "n5", to: "n0", label: "Account_Clearance_Confirmation", desc: "Zero balance confirmation for move-out", waypoints: [] },
     { id: "c23", from: "n0", to: "n5", label: "Tenant_Balance_Summary", desc: "Current billing balance and dues", waypoints: [] },
     { id: "c24", from: "n6", to: "n0", label: "Completion_Report_And_Materials", desc: "Work completed, labor hours, and parts", waypoints: [] },
-    { id: "c25", from: "n0", to: "n6", label: "Assigned_Work_Order_Details", desc: "Unit location and problem description", waypoints: [] }
+    { id: "c25", from: "n0", to: "n6", label: "Assigned_Work_Order_Details", desc: "Unit location and problem description", waypoints: [] },
+    { id: "c26", from: "n7", to: "n0", label: "Management_Directives", desc: "Rental rate guidelines, operational budgets, and audit criteria", waypoints: [] },
+    { id: "c27", from: "n0", to: "n7", label: "Executive_Performance_Summary", desc: "Occupancy metrics, revenue totals, and maintenance KPIs", waypoints: [] },
+    { id: "c28", from: "n8", to: "n0", label: "System_Config_Parameters", desc: "User access roles, security credentials, and system settings", waypoints: [] },
+    { id: "c29", from: "n0", to: "n8", label: "System_Audit_Logs", desc: "Access logs, error trails, and system health status", waypoints: [] }
   ];
 
   renderDfd();
   auditDfdDiagram();
   fitCanvasToElements();
   saveDfdStateToHistory('Load Property Leasing Context Preset');
-  showToast("Loaded Property Leasing Context Diagram (Process 0.0)!", "success");
+  showToast("Loaded Property Leasing Context Diagram (Process 0.0, 8 External Entities)!", "success");
 }
 
 function loadPropertyLeasingLevel1Preset() {
@@ -846,7 +852,12 @@ function loadPropertyLeasingLevel1Preset() {
 
     { id: "p5", type: "process", name: "5.0 MANAGE MAINTENANCE WORK ORDERS", desc: "Triages tickets, dispatches technicians, and records repairs/parts", x: 270, y: 630 },
     { id: "d5", type: "store", name: "D5 WORK_ORDERS", desc: "Repair requests, technician assignments, status, labor, and materials", x: 270, y: 705 },
-    { id: "e6", type: "entity", name: "MAINTENANCE PERSONNEL", desc: "Performs repairs, logs hours, and registers parts consumed", x: 620, y: 630 }
+    { id: "e6", type: "entity", name: "MAINTENANCE PERSONNEL", desc: "Performs repairs, logs hours, and registers parts consumed", x: 620, y: 630 },
+
+    { id: "e7", type: "entity", name: "SYSTEM ADMINISTRATOR", desc: "Configures user security roles, access permissions, and reviews system audit logs", x: 30, y: 780 },
+    { id: "p6", type: "process", name: "6.0 MANAGE SYSTEM SECURITY & AUDIT", desc: "Authenticates users, controls access roles, logs system actions, and generates compliance audits", x: 270, y: 780 },
+    { id: "d6", type: "store", name: "D6 SYSTEM_AUDIT_LOGS", desc: "User access records, security events, administrative logs, and system error traces", x: 270, y: 855 },
+    { id: "e8", type: "entity", name: "MANAGEMENT", desc: "Oversees property operations, sets leasing policies, and reviews executive governance reports", x: 620, y: 780 }
   ];
 
   dfdConnections = [
@@ -900,14 +911,21 @@ function loadPropertyLeasingLevel1Preset() {
     { id: "f44", from: "p5", to: "e6", label: "Assigned_Work_Order_Details", desc: "Dispatch ticket details to tech", waypoints: [] },
     { id: "f45", from: "e6", to: "p5", label: "Completion_Report_And_Materials", desc: "Submit work log and parts used", waypoints: [] },
     { id: "f46", from: "p5", to: "d5", label: "Completed_Work_Record", desc: "Mark ticket Completed and record cost", waypoints: [] },
-    { id: "f47", from: "p5", to: "e4", label: "Maintenance_Update_Notice", desc: "Notify tenant repair is finished", waypoints: [] }
+    { id: "f47", from: "p5", to: "e4", label: "Maintenance_Update_Notice", desc: "Notify tenant repair is finished", waypoints: [] },
+
+    { id: "f48", from: "e7", to: "p6", label: "System_Security_Config", desc: "User roles, access permissions, and authentication rules", waypoints: [] },
+    { id: "f49", from: "p6", to: "e7", label: "Security_And_Health_Report", desc: "System uptime, error alerts, and activity log summaries", waypoints: [] },
+    { id: "f50", from: "p6", to: "d6", label: "Logged_Security_Audit_Trail", desc: "Record user logins, data modifications, and security events", waypoints: [] },
+    { id: "f51", from: "d6", to: "p6", label: "Stored_Audit_Logs", desc: "Query historical event records and incident logs", waypoints: [] },
+    { id: "f52", from: "e8", to: "p6", label: "Audit_And_Governance_Request", desc: "Request for enterprise security compliance report", waypoints: [] },
+    { id: "f53", from: "p6", to: "e8", label: "Enterprise_Compliance_Report", desc: "Executive summary of system integrity, audits, and SLA compliance", waypoints: [] }
   ];
 
   renderDfd();
   auditDfdDiagram();
   fitCanvasToElements();
   saveDfdStateToHistory('Load Property Leasing Level 1 Preset');
-  showToast("Loaded Property Leasing Level 1 DFD (5 Processes, 5 Stores, 6 Entities)!", "success");
+  showToast("Loaded Property Leasing Level 1 DFD (6 Processes, 6 Stores, 8 Entities)!", "success");
 }
 
 /* ========================================================
@@ -3138,11 +3156,13 @@ const PRESET_DEFAULT_COORDS = {
     p2: [270, 180], d2: [270, 255], e3: [620, 180],
     e4: [30, 340], p3: [270, 330], d3: [270, 405],
     p4: [270, 480], d4: [270, 555], e5: [620, 480],
-    p5: [270, 630], d5: [270, 705], e6: [620, 630]
+    p5: [270, 630], d5: [270, 705], e6: [620, 630],
+    e7: [30, 780], p6: [270, 780], d6: [270, 855], e8: [620, 780]
   },
   leasing_context: {
-    n1: [40, 50], n2: [40, 230], n3: [40, 410], n0: [330, 225],
-    n4: [620, 50], n5: [620, 230], n6: [620, 410]
+    n1: [40, 40], n2: [40, 190], n3: [40, 340], n8: [40, 490],
+    n0: [330, 260],
+    n4: [620, 40], n5: [620, 190], n6: [620, 340], n7: [620, 490]
   },
   pos: {
     n1: [40, 80], n2: [270, 75], n3: [530, 80], n4: [40, 230],
@@ -3153,15 +3173,15 @@ const PRESET_DEFAULT_COORDS = {
 function detectCurrentBasePreset() {
   const nodeIds = new Set(dfdNodes.map(n => n.id));
   const l1Nodes = ['e1','p1','d1','e2','p2','d2','e3','e4','p3','d3','p4','d4','e5','p5','d5','e6'];
-  if (l1Nodes.every(id => nodeIds.has(id)) && dfdNodes.length <= l1Nodes.length + 3) {
+  if (l1Nodes.every(id => nodeIds.has(id))) {
     return 'leasing_level1';
   }
   const ctxNodes = ['n1','n2','n3','n0','n4','n5','n6'];
-  if (ctxNodes.every(id => nodeIds.has(id)) && dfdNodes.length <= ctxNodes.length + 2) {
+  if (ctxNodes.every(id => nodeIds.has(id))) {
     return 'leasing_context';
   }
   const posNodes = ['n1','n2','n3','n4','n5','n6','n7'];
-  if (posNodes.every(id => nodeIds.has(id)) && dfdNodes.length <= posNodes.length + 2) {
+  if (posNodes.every(id => nodeIds.has(id))) {
     return 'pos';
   }
   const selVal = document.getElementById('scenario-selector')?.value;
