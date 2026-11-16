@@ -296,6 +296,10 @@ function startDraggingWaypoint(e, connection, index) {
 
 function onWaypointMouseMove(e) {
   if (!draggedWaypoint) return;
+  if (e.buttons === 0) {
+    onWaypointMouseUp();
+    return;
+  }
   const svg = document.getElementById('dfd-svg');
   const svgPt = getSvgCoords(svg, e.clientX, e.clientY);
   const wp = draggedWaypoint.connection.waypoints[draggedWaypoint.index];
@@ -323,7 +327,7 @@ function onWaypointMouseMove(e) {
 
     wp.x = targetX;
     wp.y = targetY;
-    renderDfd();
+    requestDragRender();
   }
 }
 
@@ -337,6 +341,7 @@ function onWaypointMouseUp() {
     waypointDragStartPos = null;
     window.removeEventListener('mousemove', onWaypointMouseMove);
     window.removeEventListener('mouseup', onWaypointMouseUp);
+    renderDfd();
     auditDfdDiagram();
   }
 }
@@ -474,6 +479,10 @@ function startDraggingArrowEndpointTouch(e, connection, type) {
 
 function onArrowEndpointMouseMove(e) {
   if (!draggedArrowEndpoint) return;
+  if (e.buttons === 0) {
+    onArrowEndpointMouseUp();
+    return;
+  }
   draggedArrowEndpoint.moved = true;
   updateArrowEndpoint(e.clientX, e.clientY);
 }
@@ -503,7 +512,7 @@ function updateArrowEndpoint(clientX, clientY) {
   } else {
     c.sourceAnchor = { relX: closest.relX, relY: closest.relY };
   }
-  renderDfd();
+  requestDragRender();
 }
 
 function onArrowEndpointMouseUp() {
@@ -575,6 +584,10 @@ function startDraggingLabelTouch(e, connection) {
 
 function onLabelMouseMove(e) {
   if (!draggedLabel) return;
+  if (e.buttons === 0) {
+    onLabelMouseUp();
+    return;
+  }
   updateLabelDrag(e.clientX, e.clientY);
 }
 
@@ -597,7 +610,7 @@ function updateLabelDrag(clientX, clientY) {
     x: Math.round(draggedLabel.origOffset.x + dx),
     y: Math.round(draggedLabel.origOffset.y + dy)
   };
-  renderDfd();
+  requestDragRender();
 }
 
 function onLabelMouseUp() {
@@ -618,6 +631,7 @@ function endLabelDrag() {
     window.removeEventListener('touchmove', onLabelTouchMove);
     window.removeEventListener('touchend', onLabelTouchEnd);
     window.removeEventListener('touchcancel', onLabelTouchEnd);
+    renderDfd();
 
     if (wasMoved) {
       justFinishedDragging = true;
@@ -1687,6 +1701,10 @@ function onCanvasMouseDown(e) {
 
 function onCanvasMouseMove(e) {
   if (!isPanningCanvas) return;
+  if (e.buttons === 0) {
+    onCanvasMouseUp();
+    return;
+  }
   const svg = document.getElementById('dfd-svg');
   if (!svg) return;
   const rect = svg.getBoundingClientRect();
@@ -1828,8 +1846,32 @@ function getSvgCoords(svg, clientX, clientY) {
   };
 }
 
+let dragRenderPending = false;
+function requestDragRender() {
+  if (!dragRenderPending) {
+    dragRenderPending = true;
+    requestAnimationFrame(() => {
+      dragRenderPending = false;
+      renderDfd();
+    });
+  }
+}
+
+function releaseAllDfdDrags() {
+  if (draggedNode) onNodeMouseUp();
+  if (draggedWaypoint) onWaypointMouseUp();
+  if (draggedArrowEndpoint) endDraggingArrowEndpoint();
+  if (draggedLabel) endLabelDrag();
+  if (isPanningCanvas) onCanvasMouseUp();
+}
+
+window.addEventListener('blur', releaseAllDfdDrags);
+window.addEventListener('mouseup', releaseAllDfdDrags);
+document.addEventListener('mouseleave', releaseAllDfdDrags);
+
 function onNodeMouseDown(e, node) {
-  if (currentCanvasMode !== 'move') return;
+  if (currentCanvasMode !== 'move' || e.button !== 0) return;
+  releaseAllDfdDrags();
   e.preventDefault();
   e.stopPropagation();
   draggedNode = node;
@@ -1845,11 +1887,15 @@ function onNodeMouseDown(e, node) {
 
 function onNodeMouseMove(e) {
   if (!draggedNode) return;
+  if (e.buttons === 0) {
+    onNodeMouseUp();
+    return;
+  }
   const svg = document.getElementById('dfd-svg');
   const svgPt = getSvgCoords(svg, e.clientX, e.clientY);
   draggedNode.x = Math.max(-2000, Math.min(4000, Math.round(svgPt.x - dragOffset.x)));
   draggedNode.y = Math.max(-2000, Math.min(4000, Math.round(svgPt.y - dragOffset.y)));
-  renderDfd();
+  requestDragRender();
 }
 
 function onNodeMouseUp() {
@@ -1863,6 +1909,7 @@ function onNodeMouseUp() {
   nodeDragStartPos = null;
   window.removeEventListener('mousemove', onNodeMouseMove);
   window.removeEventListener('mouseup', onNodeMouseUp);
+  renderDfd();
 }
 
 function onNodeTouchStart(e, node) {
@@ -3012,59 +3059,159 @@ function getDfdExportData() {
   };
 }
 
-function encodeDfdToCode(data) {
+function packDfdData(data) {
+  const typeMap = { process: 'p', entity: 'e', store: 'd' };
+  return {
+    _v: 2,
+    s: data.scenario || '',
+    n: (data.nodes || []).map(n => [
+      n.id,
+      typeMap[n.type] || 'p',
+      n.name,
+      Math.round(n.x),
+      Math.round(n.y),
+      n.desc || ''
+    ]),
+    c: (data.connections || []).map(c => [
+      c.id,
+      c.from,
+      c.to,
+      c.label,
+      c.waypoints && c.waypoints.length ? c.waypoints.map(w => [Math.round(w.x), Math.round(w.y)]) : 0,
+      c.sourceAnchor ? [Math.round(c.sourceAnchor.relX * 100) / 100, Math.round(c.sourceAnchor.relY * 100) / 100] : 0,
+      c.targetAnchor ? [Math.round(c.targetAnchor.relX * 100) / 100, Math.round(c.targetAnchor.relY * 100) / 100] : 0,
+      c.labelOffset && (c.labelOffset.x || c.labelOffset.y) ? [Math.round(c.labelOffset.x), Math.round(c.labelOffset.y)] : 0,
+      c.desc || ''
+    ])
+  };
+}
+
+function unpackDfdData(packed) {
+  if (!packed || packed._v !== 2) return packed;
+  const revTypeMap = { p: 'process', e: 'entity', d: 'store' };
+  return {
+    version: 2,
+    app: "IT211_Leasing_DFD",
+    scenario: packed.s || 'leasing_context',
+    nodes: (packed.n || []).map(item => ({
+      id: item[0],
+      type: revTypeMap[item[1]] || 'process',
+      name: item[2],
+      x: item[3],
+      y: item[4],
+      desc: item[5] || ''
+    })),
+    connections: (packed.c || []).map(item => ({
+      id: item[0],
+      from: item[1],
+      to: item[2],
+      label: item[3],
+      waypoints: Array.isArray(item[4]) ? item[4].map(w => ({ x: w[0], y: w[1] })) : [],
+      sourceAnchor: Array.isArray(item[5]) ? { relX: item[5][0], relY: item[5][1] } : null,
+      targetAnchor: Array.isArray(item[6]) ? { relX: item[6][0], relY: item[6][1] } : null,
+      labelOffset: Array.isArray(item[7]) ? { x: item[7][0], y: item[7][1] } : null,
+      desc: item[8] || ''
+    }))
+  };
+}
+
+async function encodeDfdToCode(data) {
   try {
-    const jsonStr = JSON.stringify(data);
-    const encoded = encodeURIComponent(jsonStr);
-    return "DFD-" + btoa(encoded);
+    const packed = packDfdData(data);
+    const jsonStr = JSON.stringify(packed);
+    if (typeof CompressionStream !== 'undefined') {
+      try {
+        const blob = new Blob([new TextEncoder().encode(jsonStr)]);
+        const compStream = blob.stream().pipeThrough(new CompressionStream('deflate-raw'));
+        const buf = await new Response(compStream).arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let bin = '';
+        const chunk = 8192;
+        for (let i = 0; i < bytes.length; i += chunk) {
+          bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+        }
+        return "DFD2-" + btoa(bin);
+      } catch (streamErr) {
+        console.warn("Deflate failed, falling back to compact base64", streamErr);
+      }
+    }
+    // Fallback: compact base64
+    return "DFD2-" + btoa(unescape(encodeURIComponent(jsonStr)));
   } catch (err) {
     console.error("Encoding error:", err);
     return "";
   }
 }
 
-function decodeDfdFromCode(codeStr) {
+async function decodeDfdFromCode(codeStr) {
   if (!codeStr || typeof codeStr !== 'string') throw new Error("Empty code provided");
   let raw = codeStr.trim();
   
   // Extract hash parameter if full link was pasted
   const hashIdx = raw.indexOf('#dfd=');
-  if (hashIdx !== -1) {
-    raw = raw.substring(hashIdx + 5);
-  }
+  if (hashIdx !== -1) raw = raw.substring(hashIdx + 5);
   const shareIdx = raw.indexOf('#share=');
-  if (shareIdx !== -1) {
-    raw = raw.substring(shareIdx + 7);
-  }
+  if (shareIdx !== -1) raw = raw.substring(shareIdx + 7);
   const queryIdx = raw.indexOf('?dfd=');
-  if (queryIdx !== -1) {
-    raw = raw.substring(queryIdx + 5);
-  }
-
-  // Strip DFD- prefix if present
-  if (raw.startsWith('DFD-')) {
-    raw = raw.substring(4);
-  }
+  if (queryIdx !== -1) raw = raw.substring(queryIdx + 5);
 
   raw = decodeURIComponent(raw);
 
   // If raw JSON string was pasted directly
   if (raw.startsWith('{')) {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return unpackDfdData(parsed);
   }
 
-  // Base64 decode
-  const binaryStr = atob(raw);
-  const jsonStr = decodeURIComponent(binaryStr);
-  return JSON.parse(jsonStr);
+  // Format 1: New Compressed Format "DFD2-"
+  if (raw.startsWith('DFD2-')) {
+    const b64 = raw.substring(5);
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    
+    let jsonStr = '';
+    if (typeof DecompressionStream !== 'undefined') {
+      try {
+        const blob = new Blob([bytes]);
+        const decompStream = blob.stream().pipeThrough(new DecompressionStream('deflate-raw'));
+        jsonStr = await new Response(decompStream).text();
+      } catch (decompErr) {
+        jsonStr = decodeURIComponent(escape(bin));
+      }
+    } else {
+      jsonStr = decodeURIComponent(escape(bin));
+    }
+    const packed = JSON.parse(jsonStr);
+    return unpackDfdData(packed);
+  }
+
+  // Format 2: Legacy "DFD-" Base64 format (100% backward compatibility)
+  if (raw.startsWith('DFD-')) {
+    raw = raw.substring(4);
+    const binaryStr = atob(raw);
+    const jsonStr = decodeURIComponent(binaryStr);
+    const parsed = JSON.parse(jsonStr);
+    return unpackDfdData(parsed);
+  }
+
+  // Generic Base64 fallback
+  try {
+    const binaryStr = atob(raw);
+    const jsonStr = decodeURIComponent(binaryStr);
+    const parsed = JSON.parse(jsonStr);
+    return unpackDfdData(parsed);
+  } catch (e) {
+    throw new Error("Could not parse diagram code");
+  }
 }
 
-function openSaveShareModal() {
+async function openSaveShareModal() {
   const modal = document.getElementById('save-share-modal');
   if (!modal) return;
 
   const data = getDfdExportData();
-  const code = encodeDfdToCode(data);
+  const code = await encodeDfdToCode(data);
   const cleanUrl = window.location.origin + window.location.pathname + '#dfd=' + encodeURIComponent(code);
 
   const linkInput = document.getElementById('share-link-input');
@@ -3075,6 +3222,7 @@ function openSaveShareModal() {
   if (codeInput) codeInput.value = code;
   if (importInput) importInput.value = '';
 
+  renderSaveSlotsUI();
   modal.classList.add('active');
 }
 
@@ -3083,38 +3231,71 @@ function closeSaveShareModal() {
   if (modal) modal.classList.remove('active');
 }
 
-function copyShareLink() {
-  const linkInput = document.getElementById('share-link-input');
-  if (!linkInput) return;
-  linkInput.select();
-  navigator.clipboard.writeText(linkInput.value).then(() => {
-    showToast("Shareable link copied to clipboard!", "success");
-  }).catch(() => {
-    document.execCommand('copy');
-    showToast("Shareable link copied to clipboard!", "success");
-  });
+function saveToSlot(slotNum) {
+  try {
+    const data = getDfdExportData();
+    const mainProcess = data.nodes.find(n => n.type === 'process')?.name || 'Diagram';
+    const meta = {
+      timestamp: Date.now(),
+      name: `${mainProcess} (${data.nodes.length} nodes, ${data.connections.length} flows)`,
+      data: data
+    };
+    localStorage.setItem(`it211_dfd_slot_${slotNum}`, JSON.stringify(meta));
+    showToast(`Saved to Slot ${slotNum}!`, "success");
+    renderSaveSlotsUI();
+  } catch (e) {
+    showToast("Storage quota exceeded", "danger");
+  }
 }
 
-function copyDiagramCode() {
-  const codeInput = document.getElementById('share-code-input');
-  if (!codeInput) return;
-  codeInput.select();
-  navigator.clipboard.writeText(codeInput.value).then(() => {
-    showToast("Diagram code copied to clipboard!", "success");
-  }).catch(() => {
-    document.execCommand('copy');
-    showToast("Diagram code copied to clipboard!", "success");
-  });
+function loadFromSlot(slotNum) {
+  try {
+    const raw = localStorage.getItem(`it211_dfd_slot_${slotNum}`);
+    if (!raw) {
+      showToast(`Slot ${slotNum} is empty. Save a diagram first!`, "warning");
+      return;
+    }
+    const meta = JSON.parse(raw);
+    const data = meta.data || meta;
+    loadDfdData(data, `Restored Slot ${slotNum}`);
+    closeSaveShareModal();
+    showToast(`Restored Slot ${slotNum}: ${meta.name || 'Diagram'}`, "success");
+  } catch (e) {
+    showToast("Failed to load from slot", "danger");
+  }
 }
 
-function loadDiagramFromInput() {
+function renderSaveSlotsUI() {
+  for (let s = 1; s <= 3; s++) {
+    const labelEl = document.getElementById(`slot-info-${s}`);
+    const loadBtn = document.getElementById(`slot-load-btn-${s}`);
+    if (!labelEl) continue;
+    const raw = localStorage.getItem(`it211_dfd_slot_${s}`);
+    if (raw) {
+      try {
+        const meta = JSON.parse(raw);
+        const dateStr = new Date(meta.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        labelEl.innerText = `${meta.name || 'Saved Diagram'} • ${dateStr}`;
+        if (loadBtn) loadBtn.disabled = false;
+      } catch(e) {
+        labelEl.innerText = "Empty";
+        if (loadBtn) loadBtn.disabled = true;
+      }
+    } else {
+      labelEl.innerText = "Empty";
+      if (loadBtn) loadBtn.disabled = true;
+    }
+  }
+}
+
+async function loadDiagramFromInput() {
   const input = document.getElementById('import-code-input');
   if (!input || !input.value.trim()) {
     showToast("Please paste a shared link, code, or JSON first", "warning");
     return;
   }
   try {
-    const parsed = decodeDfdFromCode(input.value.trim());
+    const parsed = await decodeDfdFromCode(input.value.trim());
     if (!parsed || (!parsed.nodes && !parsed.dfdNodes)) {
       throw new Error("Invalid diagram structure");
     }
@@ -3223,14 +3404,14 @@ function handleDfdFileUpload(event) {
   event.target.value = '';
 }
 
-function checkUrlHashForSharedDiagram() {
+async function checkUrlHashForSharedDiagram() {
   if (window.location.hash) {
     const hash = window.location.hash;
     if (hash.startsWith('#dfd=') || hash.startsWith('#share=')) {
       try {
         const code = hash.split('=')[1];
         if (code) {
-          const data = decodeDfdFromCode(code);
+          const data = await decodeDfdFromCode(code);
           if (data && (data.nodes || data.dfdNodes)) {
             loadDfdData(data, "Shared Link Diagram");
             showToast("Successfully loaded diagram from custom link!", "success");

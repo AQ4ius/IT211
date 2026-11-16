@@ -576,8 +576,57 @@
     </div>
     <div class="modal-body" style="padding: 16px 20px; max-height: calc(85vh - 120px); overflow-y: auto;">
       <p style="font-size: 0.78rem; color: #64748b; margin-bottom: 12px; line-height: 1.4;">
-        Your entire diagram is compressed directly into shareable codes and web links. No server account, login, or database required!
+        Save your diagram directly without an account. Choose Quick Save Slots (saved locally in your browser), or use the compressed custom link / code.
       </p>
+
+      <!-- Quick Browser Save Slots (Instant 1-Click Save without Account) -->
+      <div class="save-share-card" style="border-color: #3b82f6; background: #eff6ff; margin-bottom: 12px;">
+        <div class="save-share-card-header">
+          <span class="save-share-title" style="color: #1e40af;">
+            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" stroke="#2563eb"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Quick Save Slots (Zero-Account Browser Storage)
+          </span>
+          <span class="badge badge-blue">Instant 1-Click</span>
+        </div>
+        <p style="font-size: 0.74rem; color: #475569; margin: 4px 0 8px;">
+          Persists in this browser even when you close the tab or restart. No typing or copying needed!
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <!-- Slot 1 -->
+          <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 6px 10px; border-radius: 6px; border: 1px solid #bfdbfe;">
+            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 65%;">
+              <span style="font-weight: 600; font-size: 0.76rem; color: #1e3a8a;">Slot 1:</span>
+              <span id="slot-info-1" style="font-size: 0.73rem; color: #64748b; margin-left: 6px;">Empty</span>
+            </div>
+            <div style="display: flex; gap: 5px; flex-shrink: 0;">
+              <button class="btn btn-outline" type="button" onclick="saveToSlot(1)" style="padding: 3px 8px; font-size: 0.7rem;">Save</button>
+              <button id="slot-load-btn-1" class="btn btn-primary" type="button" onclick="loadFromSlot(1)" style="padding: 3px 8px; font-size: 0.7rem;">Load</button>
+            </div>
+          </div>
+          <!-- Slot 2 -->
+          <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 6px 10px; border-radius: 6px; border: 1px solid #bfdbfe;">
+            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 65%;">
+              <span style="font-weight: 600; font-size: 0.76rem; color: #1e3a8a;">Slot 2:</span>
+              <span id="slot-info-2" style="font-size: 0.73rem; color: #64748b; margin-left: 6px;">Empty</span>
+            </div>
+            <div style="display: flex; gap: 5px; flex-shrink: 0;">
+              <button class="btn btn-outline" type="button" onclick="saveToSlot(2)" style="padding: 3px 8px; font-size: 0.7rem;">Save</button>
+              <button id="slot-load-btn-2" class="btn btn-primary" type="button" onclick="loadFromSlot(2)" style="padding: 3px 8px; font-size: 0.7rem;">Load</button>
+            </div>
+          </div>
+          <!-- Slot 3 -->
+          <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 6px 10px; border-radius: 6px; border: 1px solid #bfdbfe;">
+            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 65%;">
+              <span style="font-weight: 600; font-size: 0.76rem; color: #1e3a8a;">Slot 3:</span>
+              <span id="slot-info-3" style="font-size: 0.73rem; color: #64748b; margin-left: 6px;">Empty</span>
+            </div>
+            <div style="display: flex; gap: 5px; flex-shrink: 0;">
+              <button class="btn btn-outline" type="button" onclick="saveToSlot(3)" style="padding: 3px 8px; font-size: 0.7rem;">Save</button>
+              <button id="slot-load-btn-3" class="btn btn-primary" type="button" onclick="loadFromSlot(3)" style="padding: 3px 8px; font-size: 0.7rem;">Load</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Option 1: Shareable Link -->
       <div class="save-share-card">
