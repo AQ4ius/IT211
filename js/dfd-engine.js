@@ -945,7 +945,12 @@ function loadPropertyLeasingLevel1Preset() {
     { id: "f50", from: "p6", to: "d6", label: "Logged_Security_Audit_Trail", desc: "Record user logins, data modifications, and security events", waypoints: [{ x: 315, y: 895 }, { x: 315, y: 920 }] },
     { id: "f51", from: "d6", to: "p6", label: "Stored_Audit_Logs", desc: "Query historical event records and incident logs", waypoints: [{ x: 355, y: 920 }, { x: 355, y: 895 }] },
     { id: "f52", from: "e8", to: "p6", label: "Audit_And_Governance_Request", desc: "Request for enterprise security compliance report", waypoints: [] },
-    { id: "f53", from: "p6", to: "e8", label: "Enterprise_Compliance_Report", desc: "Executive summary of system integrity, audits, and SLA compliance", waypoints: [] }
+    { id: "f53", from: "p6", to: "e8", label: "Enterprise_Compliance_Report", desc: "Executive summary of system integrity, audits, and SLA compliance", waypoints: [] },
+
+    // Cross-Process & Data Store Integration into Process 6.0 (Central Audit Engine)
+    { id: "f54", from: "p4", to: "p6", label: "Financial_Audit_Event", desc: "Audit trail for rental payments, ledger balance adjustments, and financial verification", waypoints: [{ x: 400, y: 535 }, { x: 450, y: 535 }, { x: 450, y: 825 }, { x: 350, y: 825 }] },
+    { id: "f55", from: "p3", to: "p6", label: "Lease_Execution_Audit_Event", desc: "Audit records for executed leases, renewals, and contract terminations", waypoints: [{ x: 400, y: 375 }, { x: 510, y: 375 }, { x: 510, y: 835 }, { x: 400, y: 835 }] },
+    { id: "f56", from: "d4", to: "p6", label: "Ledger_Records_For_Audit", desc: "Reconciliation data from payment ledgers for executive compliance reporting", waypoints: [{ x: 400, y: 605 }, { x: 430, y: 605 }, { x: 430, y: 825 }, { x: 310, y: 825 }] }
   ];
 
   renderDfd();
