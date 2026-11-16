@@ -835,88 +835,115 @@ function loadPropertyLeasingLevel1Preset() {
   dfdNodes = [
     { id: "e1", type: "entity", name: "PROSPECTIVE TENANT", desc: "Inquires about units and submits applications", x: 30, y: 40 },
     { id: "p1", type: "process", name: "1.0 MANAGE PROPERTY & UNIT INVENTORY", desc: "Registers properties, maintains units, filters vacancies", x: 270, y: 35 },
-    { id: "d1", type: "store", name: "D1 PROPERTIES_AND_UNITS", desc: "Building specs, unit numbers, pricing, and occupancy status", x: 270, y: 110 },
+    { id: "d1", type: "store", name: "D1 PROPERTIES_AND_UNITS", desc: "Building specs, unit numbers, pricing, and occupancy status", x: 270, y: 120 },
     { id: "e2", type: "entity", name: "PROPERTY MANAGER", desc: "Registers properties, assigns maintenance, approves move-ins/outs", x: 620, y: 35 },
 
-    { id: "p2", type: "process", name: "2.0 PROCESS RENTAL APPLICATIONS", desc: "Vets applications, verifies credit/employment, records decisions", x: 270, y: 180 },
-    { id: "d2", type: "store", name: "D2 RENTAL_APPLICATIONS", desc: "Submitted tenant credentials, references, and review statuses", x: 270, y: 255 },
-    { id: "e3", type: "entity", name: "LEASING OFFICER", desc: "Reviews applications, runs checks, and drafts lease agreements", x: 620, y: 180 },
+    { id: "p2", type: "process", name: "2.0 PROCESS RENTAL APPLICATIONS", desc: "Vets applications, verifies credit/employment, records decisions", x: 270, y: 200 },
+    { id: "d2", type: "store", name: "D2 RENTAL_APPLICATIONS", desc: "Submitted tenant credentials, references, and review statuses", x: 270, y: 280 },
+    { id: "e3", type: "entity", name: "LEASING OFFICER", desc: "Reviews applications, runs checks, and drafts lease agreements", x: 620, y: 200 },
 
-    { id: "e4", type: "entity", name: "TENANT", desc: "Active resident: pays rent, submits maintenance tickets, signs leases", x: 30, y: 340 },
-    { id: "p3", type: "process", name: "3.0 MANAGE LEASES & TENANCY", desc: "Prepares agreements, processes move-ins, monitors renewals, handles move-outs", x: 270, y: 330 },
-    { id: "d3", type: "store", name: "D3 LEASE_AGREEMENTS", desc: "Signed leases, rental rates, security deposits, and expiration dates", x: 270, y: 405 },
+    { id: "e4", type: "entity", name: "TENANT", desc: "Active resident: pays rent, submits maintenance tickets, signs leases", x: 30, y: 370 },
+    { id: "p3", type: "process", name: "3.0 MANAGE LEASES & TENANCY", desc: "Prepares agreements, processes move-ins, monitors renewals, handles move-outs", x: 270, y: 360 },
+    { id: "d3", type: "store", name: "D3 LEASE_AGREEMENTS", desc: "Signed leases, rental rates, security deposits, and expiration dates", x: 270, y: 440 },
 
-    { id: "p4", type: "process", name: "4.0 PROCESS RENT PAYMENTS & LEDGER", desc: "Calculates dues, logs payments, issues receipts, flags overdue accounts", x: 270, y: 480 },
-    { id: "d4", type: "store", name: "D4 PAYMENT_LEDGERS", desc: "Payment records, billing cycles, balances, and payment statuses", x: 270, y: 555 },
-    { id: "e5", type: "entity", name: "ACCOUNTING PERSONNEL", desc: "Maintains financial ledger, verifies receipts, and certifies clearances", x: 620, y: 480 },
+    { id: "p4", type: "process", name: "4.0 PROCESS RENT PAYMENTS & LEDGER", desc: "Calculates dues, logs payments, issues receipts, flags overdue accounts", x: 270, y: 520 },
+    { id: "d4", type: "store", name: "D4 PAYMENT_LEDGERS", desc: "Payment records, billing cycles, balances, and payment statuses", x: 270, y: 600 },
+    { id: "e5", type: "entity", name: "ACCOUNTING PERSONNEL", desc: "Maintains financial ledger, verifies receipts, and certifies clearances", x: 620, y: 520 },
 
-    { id: "p5", type: "process", name: "5.0 MANAGE MAINTENANCE WORK ORDERS", desc: "Triages tickets, dispatches technicians, and records repairs/parts", x: 270, y: 630 },
-    { id: "d5", type: "store", name: "D5 WORK_ORDERS", desc: "Repair requests, technician assignments, status, labor, and materials", x: 270, y: 705 },
-    { id: "e6", type: "entity", name: "MAINTENANCE PERSONNEL", desc: "Performs repairs, logs hours, and registers parts consumed", x: 620, y: 630 },
+    { id: "p5", type: "process", name: "5.0 MANAGE MAINTENANCE WORK ORDERS", desc: "Triages tickets, dispatches technicians, and records repairs/parts", x: 270, y: 680 },
+    { id: "d5", type: "store", name: "D5 WORK_ORDERS", desc: "Repair requests, technician assignments, status, labor, and materials", x: 270, y: 760 },
+    { id: "e6", type: "entity", name: "MAINTENANCE PERSONNEL", desc: "Performs repairs, logs hours, and registers parts consumed", x: 620, y: 680 },
 
-    { id: "e7", type: "entity", name: "SYSTEM ADMINISTRATOR", desc: "Configures user security roles, access permissions, and reviews system audit logs", x: 30, y: 780 },
-    { id: "p6", type: "process", name: "6.0 MANAGE SYSTEM SECURITY & AUDIT", desc: "Authenticates users, controls access roles, logs system actions, and generates compliance audits", x: 270, y: 780 },
-    { id: "d6", type: "store", name: "D6 SYSTEM_AUDIT_LOGS", desc: "User access records, security events, administrative logs, and system error traces", x: 270, y: 855 },
-    { id: "e8", type: "entity", name: "MANAGEMENT", desc: "Oversees property operations, sets leasing policies, and reviews executive governance reports", x: 620, y: 780 }
+    { id: "e7", type: "entity", name: "SYSTEM ADMINISTRATOR", desc: "Configures user security roles, access permissions, and reviews system audit logs", x: 30, y: 840 },
+    { id: "p6", type: "process", name: "6.0 MANAGE SYSTEM SECURITY & AUDIT", desc: "Authenticates users, controls access roles, logs system actions, and generates compliance audits", x: 270, y: 840 },
+    { id: "d6", type: "store", name: "D6 SYSTEM_AUDIT_LOGS", desc: "User access records, security events, administrative logs, and system error traces", x: 270, y: 920 },
+    { id: "e8", type: "entity", name: "MANAGEMENT", desc: "Oversees property operations, sets leasing policies, and reviews executive governance reports", x: 620, y: 840 }
   ];
 
   dfdConnections = [
+    // ----------------------------------------------------
+    // PROCESS 1.0 (Inventory)
+    // ----------------------------------------------------
     { id: "f1", from: "e1", to: "p1", label: "Search_Criteria", desc: "Unit criteria and location preference", waypoints: [] },
     { id: "f2", from: "p1", to: "e1", label: "Available_Units_Catalog", desc: "Matching available units", waypoints: [] },
     { id: "f3", from: "e2", to: "p1", label: "Property_And_Unit_Specs", desc: "Property registration details", waypoints: [] },
-    { id: "f4", from: "p1", to: "d1", label: "New_Property_And_Unit_Records", desc: "Insert newly registered properties and units", waypoints: [] },
-    { id: "f5", from: "d1", to: "p1", label: "Matching_Unit_Data", desc: "Query available units matching search", waypoints: [] },
+    { id: "f4", from: "p1", to: "d1", label: "New_Property_And_Unit_Records", desc: "Insert newly registered properties and units", waypoints: [{ x: 315, y: 90 }, { x: 315, y: 120 }] },
+    { id: "f5", from: "d1", to: "p1", label: "Matching_Unit_Data", desc: "Query available units matching search", waypoints: [{ x: 355, y: 120 }, { x: 355, y: 90 }] },
 
-    { id: "f6", from: "e1", to: "p2", label: "Rental_Application_Package", desc: "Completed form and credentials", waypoints: [] },
-    { id: "f7", from: "p2", to: "d2", label: "Submitted_Application_Record", desc: "Store pending application record", waypoints: [] },
-    { id: "f8", from: "d2", to: "p2", label: "Application_Details_For_Review", desc: "Fetch application info for verification", waypoints: [] },
+    // ----------------------------------------------------
+    // PROCESS 2.0 (Rental Applications)
+    // ----------------------------------------------------
+    { id: "f6", from: "e1", to: "p2", label: "Rental_Application_Package", desc: "Completed form and credentials", waypoints: [{ x: 150, y: 65 }, { x: 195, y: 65 }, { x: 195, y: 210 }, { x: 270, y: 210 }] },
+    { id: "f7", from: "p2", to: "d2", label: "Submitted_Application_Record", desc: "Store pending application record", waypoints: [{ x: 305, y: 255 }, { x: 305, y: 280 }] },
+    { id: "f8", from: "d2", to: "p2", label: "Application_Details_For_Review", desc: "Fetch application info for verification", waypoints: [{ x: 335, y: 280 }, { x: 335, y: 255 }] },
     { id: "f9", from: "p2", to: "e3", label: "Application_Review_Queue", desc: "Route to leasing officer", waypoints: [] },
     { id: "f10", from: "e3", to: "p2", label: "Screening_Decision", desc: "Approval, rejection, or request for info", waypoints: [] },
-    { id: "f11", from: "p2", to: "d2", label: "Screening_Decision_Status", desc: "Update application status", waypoints: [] },
-    { id: "f12", from: "p2", to: "e1", label: "Application_Status_Notice", desc: "Send result to applicant", waypoints: [] },
+    { id: "f11", from: "p2", to: "d2", label: "Screening_Decision_Status", desc: "Update application status", waypoints: [{ x: 365, y: 255 }, { x: 365, y: 280 }] },
+    { id: "f12", from: "p2", to: "e1", label: "Application_Status_Notice", desc: "Send result to applicant", waypoints: [{ x: 270, y: 230 }, { x: 175, y: 230 }, { x: 175, y: 80 }, { x: 150, y: 80 }] },
 
+    // ----------------------------------------------------
+    // PROCESS 3.0 (Leases & Tenancy)
+    // ----------------------------------------------------
     { id: "f13", from: "d2", to: "p3", label: "Approved_Applicant_Data", desc: "Fetch approved tenant info for lease drafting", waypoints: [] },
-    { id: "f14", from: "e3", to: "p3", label: "Prepared_Lease_Terms", desc: "Provide negotiated lease clauses", waypoints: [] },
-    { id: "f15", from: "p3", to: "e4", label: "Lease_Document", desc: "Transmit draft lease for signing", waypoints: [] },
-    { id: "f16", from: "e4", to: "p3", label: "Signed_Lease", desc: "Executed agreement returned by tenant", waypoints: [] },
-    { id: "f17", from: "p3", to: "d3", label: "New_Signed_Lease_Record", desc: "Persist signed lease into archive", waypoints: [] },
-    { id: "f18", from: "e2", to: "p3", label: "Move_In_Approval", desc: "Confirm initial deposit received and keys handed over", waypoints: [] },
-    { id: "f19", from: "p3", to: "d1", label: "Unit_Status_Update", desc: "Transition unit status from Available to Occupied", waypoints: [] },
-    { id: "f20", from: "d3", to: "p3", label: "Expiring_Lease_Alert_Data", desc: "System checks leases with <60 days remaining", waypoints: [] },
-    { id: "f21", from: "p3", to: "e2", label: "Approaching_Expiration_Alert", desc: "Notify manager of upcoming expiration", waypoints: [] },
-    { id: "f22", from: "p3", to: "e4", label: "Renewal_Notice", desc: "Offer lease extension terms to tenant", waypoints: [] },
-    { id: "f23", from: "e4", to: "p3", label: "Renewal_Decision", desc: "Tenant confirms renewal acceptance", waypoints: [] },
-    { id: "f24", from: "p3", to: "d3", label: "Renewed_Lease_Record", desc: "Record extended lease dates", waypoints: [] },
-    { id: "f25", from: "e4", to: "p3", label: "Move_Out_Notice", desc: "Tenant notifies non-renewal", waypoints: [] },
-    { id: "f26", from: "p3", to: "e5", label: "Move_Out_Financial_Review", desc: "Request final ledger clearance", waypoints: [] },
-    { id: "f27", from: "e5", to: "p3", label: "Account_Clearance_Confirmation", desc: "Confirm all dues settled", waypoints: [] },
-    { id: "f28", from: "e2", to: "p3", label: "Inspection_Clearance", desc: "Confirm unit inspected and keys returned", waypoints: [] },
-    { id: "f29", from: "p3", to: "d3", label: "Terminated_Lease_Status", desc: "Mark lease as terminated / completed", waypoints: [] },
-    { id: "f30", from: "p3", to: "e2", label: "Unit_Turnover_Notice", desc: "Alert manager that unit is vacant and ready", waypoints: [] },
+    { id: "f14", from: "e3", to: "p3", label: "Prepared_Lease_Terms", desc: "Provide negotiated lease clauses", waypoints: [{ x: 620, y: 235 }, { x: 500, y: 235 }, { x: 500, y: 375 }, { x: 400, y: 375 }] },
+    { id: "f15", from: "p3", to: "e4", label: "Lease_Document", desc: "Transmit draft lease for signing", waypoints: [{ x: 270, y: 365 }, { x: 150, y: 365 }] },
+    { id: "f16", from: "e4", to: "p3", label: "Signed_Lease", desc: "Executed agreement returned by tenant", waypoints: [{ x: 150, y: 377 }, { x: 270, y: 377 }] },
+    { id: "f17", from: "p3", to: "d3", label: "New_Signed_Lease_Record", desc: "Persist signed lease into archive", waypoints: [{ x: 305, y: 415 }, { x: 305, y: 440 }] },
+    // f18: Property Manager move-in approval routed via right bus gutter (x: 770)
+    { id: "f18", from: "e2", to: "p3", label: "Move_In_Approval", desc: "Confirm initial deposit received and keys handed over", waypoints: [{ x: 740, y: 45 }, { x: 770, y: 45 }, { x: 770, y: 365 }, { x: 400, y: 365 }] },
+    // f19: Unit status update up to D1 routed via left gutter (x: 215)
+    { id: "f19", from: "p3", to: "d1", label: "Unit_Status_Update", desc: "Transition unit status from Available to Occupied", waypoints: [{ x: 270, y: 385 }, { x: 215, y: 385 }, { x: 215, y: 140 }, { x: 270, y: 140 }] },
+    { id: "f20", from: "d3", to: "p3", label: "Expiring_Lease_Alert_Data", desc: "System checks leases with <60 days remaining", waypoints: [{ x: 325, y: 440 }, { x: 325, y: 415 }] },
+    // f21: Approaching expiration alert up to Property Manager routed via right bus gutter (x: 790)
+    { id: "f21", from: "p3", to: "e2", label: "Approaching_Expiration_Alert", desc: "Notify manager of upcoming expiration", waypoints: [{ x: 400, y: 375 }, { x: 790, y: 375 }, { x: 790, y: 35 }, { x: 740, y: 35 }] },
+    { id: "f22", from: "p3", to: "e4", label: "Renewal_Notice", desc: "Offer lease extension terms to tenant", waypoints: [{ x: 270, y: 389 }, { x: 150, y: 389 }] },
+    { id: "f23", from: "e4", to: "p3", label: "Renewal_Decision", desc: "Tenant confirms renewal acceptance", waypoints: [{ x: 150, y: 401 }, { x: 270, y: 401 }] },
+    { id: "f24", from: "p3", to: "d3", label: "Renewed_Lease_Record", desc: "Record extended lease dates", waypoints: [{ x: 345, y: 415 }, { x: 345, y: 440 }] },
+    { id: "f25", from: "e4", to: "p3", label: "Move_Out_Notice", desc: "Tenant notifies non-renewal", waypoints: [{ x: 150, y: 413 }, { x: 270, y: 413 }] },
+    // f26 & f27: Accounting move-out clearance bracket
+    { id: "f26", from: "p3", to: "e5", label: "Move_Out_Financial_Review", desc: "Request final ledger clearance", waypoints: [{ x: 400, y: 405 }, { x: 480, y: 405 }, { x: 480, y: 530 }, { x: 620, y: 530 }] },
+    { id: "f27", from: "e5", to: "p3", label: "Account_Clearance_Confirmation", desc: "Confirm all dues settled", waypoints: [{ x: 620, y: 550 }, { x: 460, y: 550 }, { x: 460, y: 415 }, { x: 400, y: 415 }] },
+    // f28: Property Manager inspection clearance routed via right bus gutter (x: 810)
+    { id: "f28", from: "e2", to: "p3", label: "Inspection_Clearance", desc: "Confirm unit inspected and keys returned", waypoints: [{ x: 740, y: 60 }, { x: 810, y: 60 }, { x: 810, y: 385 }, { x: 400, y: 385 }] },
+    { id: "f29", from: "p3", to: "d3", label: "Terminated_Lease_Status", desc: "Mark lease as terminated / completed", waypoints: [{ x: 365, y: 415 }, { x: 365, y: 440 }] },
+    // f30: Unit turnover notice up to Property Manager routed via right bus gutter (x: 830)
+    { id: "f30", from: "p3", to: "e2", label: "Unit_Turnover_Notice", desc: "Alert manager that unit is vacant and ready", waypoints: [{ x: 400, y: 395 }, { x: 830, y: 395 }, { x: 830, y: 20 }, { x: 740, y: 20 }] },
 
-    { id: "f31", from: "e4", to: "p4", label: "Rent_Payment_Submission", desc: "Tenant submits monthly payment", waypoints: [] },
+    // ----------------------------------------------------
+    // PROCESS 4.0 (Payments & Ledger)
+    // ----------------------------------------------------
+    // f31 & f35: Tenant payment bracket via left gutter (x: 195, 180)
+    { id: "f31", from: "e4", to: "p4", label: "Rent_Payment_Submission", desc: "Tenant submits monthly payment", waypoints: [{ x: 150, y: 395 }, { x: 195, y: 395 }, { x: 195, y: 530 }, { x: 270, y: 530 }] },
     { id: "f32", from: "d3", to: "p4", label: "Active_Lease_Terms", desc: "Verify rent amount and due date", waypoints: [] },
     { id: "f33", from: "e5", to: "p4", label: "Payment_Record_Entry", desc: "Accounting logs verified bank deposit", waypoints: [] },
-    { id: "f34", from: "p4", to: "d4", label: "Recorded_Payment_Transaction", desc: "Save payment entry to ledger", waypoints: [] },
-    { id: "f35", from: "p4", to: "e4", label: "Payment_Receipt", desc: "Issue official payment acknowledgment", waypoints: [] },
-    { id: "f36", from: "d4", to: "p4", label: "Tenant_Billing_Balance", desc: "Query ledger for outstanding balances", waypoints: [] },
+    { id: "f34", from: "p4", to: "d4", label: "Recorded_Payment_Transaction", desc: "Save payment entry to ledger", waypoints: [{ x: 315, y: 575 }, { x: 315, y: 600 }] },
+    { id: "f35", from: "p4", to: "e4", label: "Payment_Receipt", desc: "Issue official payment acknowledgment", waypoints: [{ x: 270, y: 550 }, { x: 180, y: 550 }, { x: 180, y: 415 }, { x: 150, y: 415 }] },
+    { id: "f36", from: "d4", to: "p4", label: "Tenant_Billing_Balance", desc: "Query ledger for outstanding balances", waypoints: [{ x: 355, y: 600 }, { x: 355, y: 575 }] },
     { id: "f37", from: "p4", to: "e5", label: "Tenant_Balance_Summary", desc: "Send report of overdue accounts", waypoints: [] },
 
-    { id: "f38", from: "e4", to: "p5", label: "Maintenance_Request", desc: "Tenant logs repair issue", waypoints: [] },
-    { id: "f39", from: "p5", to: "d5", label: "New_Maintenance_Request", desc: "Log ticket with Open status", waypoints: [] },
-    { id: "f40", from: "d5", to: "p5", label: "Open_Requests_List", desc: "Retrieve active tickets", waypoints: [] },
-    { id: "f41", from: "p5", to: "e2", label: "Open_Work_Orders_List", desc: "Present pending queue to manager", waypoints: [] },
-    { id: "f42", from: "e2", to: "p5", label: "Work_Order_Assignment", desc: "Assign technician to ticket", waypoints: [] },
-    { id: "f43", from: "p5", to: "d5", label: "Assignment_Status_Update", desc: "Update ticket status to Assigned", waypoints: [] },
+    // ----------------------------------------------------
+    // PROCESS 5.0 (Work Orders)
+    // ----------------------------------------------------
+    // f38 & f47: Tenant maintenance ticket routed via outer far-left gutter (x: 5, -15)
+    { id: "f38", from: "e4", to: "p5", label: "Maintenance_Request", desc: "Tenant logs repair issue", waypoints: [{ x: 30, y: 405 }, { x: 5, y: 405 }, { x: 5, y: 695 }, { x: 270, y: 695 }] },
+    { id: "f39", from: "p5", to: "d5", label: "New_Maintenance_Request", desc: "Log ticket with Open status", waypoints: [{ x: 305, y: 735 }, { x: 305, y: 760 }] },
+    { id: "f40", from: "d5", to: "p5", label: "Open_Requests_List", desc: "Retrieve active tickets", waypoints: [{ x: 325, y: 760 }, { x: 325, y: 735 }] },
+    // f41 & f42: Property Manager work order assignment routed via outer right bus gutter (x: 850, 870)
+    { id: "f41", from: "p5", to: "e2", label: "Open_Work_Orders_List", desc: "Present pending queue to manager", waypoints: [{ x: 400, y: 695 }, { x: 850, y: 695 }, { x: 850, y: 15 }, { x: 740, y: 15 }] },
+    { id: "f42", from: "e2", to: "p5", label: "Work_Order_Assignment", desc: "Assign technician to ticket", waypoints: [{ x: 740, y: 75 }, { x: 870, y: 75 }, { x: 870, y: 710 }, { x: 400, y: 710 }] },
+    { id: "f43", from: "p5", to: "d5", label: "Assignment_Status_Update", desc: "Update ticket status to Assigned", waypoints: [{ x: 345, y: 735 }, { x: 345, y: 760 }] },
     { id: "f44", from: "p5", to: "e6", label: "Assigned_Work_Order_Details", desc: "Dispatch ticket details to tech", waypoints: [] },
     { id: "f45", from: "e6", to: "p5", label: "Completion_Report_And_Materials", desc: "Submit work log and parts used", waypoints: [] },
-    { id: "f46", from: "p5", to: "d5", label: "Completed_Work_Record", desc: "Mark ticket Completed and record cost", waypoints: [] },
-    { id: "f47", from: "p5", to: "e4", label: "Maintenance_Update_Notice", desc: "Notify tenant repair is finished", waypoints: [] },
+    { id: "f46", from: "p5", to: "d5", label: "Completed_Work_Record", desc: "Mark ticket Completed and record cost", waypoints: [{ x: 365, y: 735 }, { x: 365, y: 760 }] },
+    { id: "f47", from: "p5", to: "e4", label: "Maintenance_Update_Notice", desc: "Notify tenant repair is finished", waypoints: [{ x: 270, y: 715 }, { x: -15, y: 715 }, { x: -15, y: 385 }, { x: 30, y: 385 }] },
 
+    // ----------------------------------------------------
+    // PROCESS 6.0 (Security & Audit)
+    // ----------------------------------------------------
     { id: "f48", from: "e7", to: "p6", label: "System_Security_Config", desc: "User roles, access permissions, and authentication rules", waypoints: [] },
     { id: "f49", from: "p6", to: "e7", label: "Security_And_Health_Report", desc: "System uptime, error alerts, and activity log summaries", waypoints: [] },
-    { id: "f50", from: "p6", to: "d6", label: "Logged_Security_Audit_Trail", desc: "Record user logins, data modifications, and security events", waypoints: [] },
-    { id: "f51", from: "d6", to: "p6", label: "Stored_Audit_Logs", desc: "Query historical event records and incident logs", waypoints: [] },
+    { id: "f50", from: "p6", to: "d6", label: "Logged_Security_Audit_Trail", desc: "Record user logins, data modifications, and security events", waypoints: [{ x: 315, y: 895 }, { x: 315, y: 920 }] },
+    { id: "f51", from: "d6", to: "p6", label: "Stored_Audit_Logs", desc: "Query historical event records and incident logs", waypoints: [{ x: 355, y: 920 }, { x: 355, y: 895 }] },
     { id: "f52", from: "e8", to: "p6", label: "Audit_And_Governance_Request", desc: "Request for enterprise security compliance report", waypoints: [] },
     { id: "f53", from: "p6", to: "e8", label: "Enterprise_Compliance_Report", desc: "Executive summary of system integrity, audits, and SLA compliance", waypoints: [] }
   ];
@@ -1672,6 +1699,16 @@ function fitCanvasToElements() {
     minY = Math.min(minY, n.y);
     maxX = Math.max(maxX, n.x + dims.w);
     maxY = Math.max(maxY, n.y + dims.h);
+  });
+
+  // Account for flow bend points and bus gutters
+  dfdConnections.forEach(c => {
+    (c.waypoints || []).forEach(w => {
+      minX = Math.min(minX, w.x);
+      minY = Math.min(minY, w.y);
+      maxX = Math.max(maxX, w.x);
+      maxY = Math.max(maxY, w.y);
+    });
   });
 
   const pad = 60;
@@ -2461,6 +2498,9 @@ function auditDfdDiagram() {
   sinList.innerHTML = "";
   let sinsFound = [];
 
+  const scenarioVal = document.getElementById('scenario-selector')?.value;
+  const isContextDiagram = scenarioVal === 'atm' || scenarioVal === 'leasing_context' || (dfdNodes.filter(n => n.type === 'process').length === 1 && dfdNodes.some(n => n.name.includes("0") || n.name.toLowerCase().includes("system")));
+
   // Check Sin 1: Store to Store
   dfdConnections.forEach(c => {
     const from = dfdNodes.find(n => n.id === c.from);
@@ -2589,8 +2629,6 @@ function auditDfdDiagram() {
   });
 
   // Check Context Diagram Level Rule (No Data Stores in Context View)
-  const scenarioVal = document.getElementById('scenario-selector')?.value;
-  const isContextDiagram = scenarioVal === 'atm' || scenarioVal === 'leasing_context' || (dfdNodes.filter(n => n.type === 'process').length === 1 && dfdNodes.some(n => n.name.includes("0") || n.name.toLowerCase().includes("system")));
   if (isContextDiagram) {
     const storesInContext = dfdNodes.filter(n => n.type === 'store');
     if (storesInContext.length > 0) {
@@ -3104,8 +3142,7 @@ function packDfdData(data) {
       typeMap[n.type] || 'p',
       n.name,
       Math.round(n.x),
-      Math.round(n.y),
-      n.desc || ''
+      Math.round(n.y)
     ]),
     c: (data.connections || []).map(c => [
       c.id,
@@ -3115,8 +3152,7 @@ function packDfdData(data) {
       c.waypoints && c.waypoints.length ? c.waypoints.map(w => [Math.round(w.x), Math.round(w.y)]) : 0,
       c.sourceAnchor ? [Math.round(c.sourceAnchor.relX * 100) / 100, Math.round(c.sourceAnchor.relY * 100) / 100] : 0,
       c.targetAnchor ? [Math.round(c.targetAnchor.relX * 100) / 100, Math.round(c.targetAnchor.relY * 100) / 100] : 0,
-      c.labelOffset && (c.labelOffset.x || c.labelOffset.y) ? [Math.round(c.labelOffset.x), Math.round(c.labelOffset.y)] : 0,
-      c.desc || ''
+      c.labelOffset && (c.labelOffset.x || c.labelOffset.y) ? [Math.round(c.labelOffset.x), Math.round(c.labelOffset.y)] : 0
     ])
   };
 }
@@ -3152,12 +3188,12 @@ function unpackDfdData(packed) {
 
 const PRESET_DEFAULT_COORDS = {
   leasing_level1: {
-    e1: [30, 40], p1: [270, 35], d1: [270, 110], e2: [620, 35],
-    p2: [270, 180], d2: [270, 255], e3: [620, 180],
-    e4: [30, 340], p3: [270, 330], d3: [270, 405],
-    p4: [270, 480], d4: [270, 555], e5: [620, 480],
-    p5: [270, 630], d5: [270, 705], e6: [620, 630],
-    e7: [30, 780], p6: [270, 780], d6: [270, 855], e8: [620, 780]
+    e1: [30, 40], p1: [270, 35], d1: [270, 120], e2: [620, 35],
+    p2: [270, 200], d2: [270, 280], e3: [620, 200],
+    e4: [30, 370], p3: [270, 360], d3: [270, 440],
+    p4: [270, 520], d4: [270, 600], e5: [620, 520],
+    p5: [270, 680], d5: [270, 760], e6: [620, 680],
+    e7: [30, 840], p6: [270, 840], d6: [270, 920], e8: [620, 840]
   },
   leasing_context: {
     n1: [40, 40], n2: [40, 190], n3: [40, 340], n8: [40, 490],
@@ -3378,37 +3414,9 @@ async function decodeDfdFromCode(codeStr) {
 
 async function generateCurrentWorkspaceShare(showToastFeedback = false) {
   const baseUrl = window.location.origin + window.location.pathname;
-  const basePreset = detectCurrentBasePreset();
-  let cleanUrl = '';
-  let code = '';
-
-  if (basePreset && PRESET_DEFAULT_COORDS[basePreset]) {
-    const defMap = PRESET_DEFAULT_COORDS[basePreset];
-    const moved = [];
-    dfdNodes.forEach(n => {
-      if (defMap[n.id]) {
-        const [dx, dy] = defMap[n.id];
-        const curX = Math.round(n.x);
-        const curY = Math.round(n.y);
-        if (Math.abs(curX - dx) > 2 || Math.abs(curY - dy) > 2) {
-          moved.push(`${n.id}:${curX},${curY}`);
-        }
-      }
-    });
-
-    if (moved.length === 0) {
-      cleanUrl = `${baseUrl}#preset=${basePreset}`;
-      code = `#preset=${basePreset}`;
-    } else {
-      cleanUrl = `${baseUrl}#preset=${basePreset}&m=${moved.join(';')}`;
-      code = `#preset=${basePreset}&m=${moved.join(';')}`;
-    }
-  } else {
-    // Fully custom diagram
-    const data = getDfdExportData();
-    code = await encodeDfdToCode(data);
-    cleanUrl = `${baseUrl}#dfd=${code}`;
-  }
+  const data = getDfdExportData();
+  const code = await encodeDfdToCode(data);
+  const cleanUrl = `${baseUrl}#dfd=${code}`;
 
   const linkInput = document.getElementById('share-link-input');
   const codeInput = document.getElementById('share-code-input');
@@ -3419,11 +3427,11 @@ async function generateCurrentWorkspaceShare(showToastFeedback = false) {
   if (badgeEl) {
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const charCount = cleanUrl.length;
-    badgeEl.innerText = `Workspace Link Ready (${dfdNodes.length} nodes, ${dfdConnections.length} flows • ${charCount} chars • Fits in 1 line • ${timeStr})`;
+    badgeEl.innerText = `Custom Workspace Snapshot Ready (${dfdNodes.length} nodes, ${dfdConnections.length} flows • ${charCount} chars • Preserves all custom edits & wiring • ${timeStr})`;
     badgeEl.style.display = 'inline-block';
   }
   if (showToastFeedback) {
-    showToast(`Generated ultra-short workspace link (${cleanUrl.length} chars)!`, "success");
+    showToast(`Generated custom workspace link preserving all edits (${cleanUrl.length} chars)!`, "success");
   }
 }
 
