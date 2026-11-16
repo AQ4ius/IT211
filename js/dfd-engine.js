@@ -760,6 +760,7 @@ function loadPerfectDfdPreset() {
 
   renderDfd();
   auditDfdDiagram();
+  fitCanvasToElements();
   saveDfdStateToHistory('Load Balanced Preset');
   showToast("Loaded textbook balanced DFD preset (Clean 100%)!", "success");
 }
@@ -812,6 +813,7 @@ function loadPropertyLeasingContextPreset() {
 
   renderDfd();
   auditDfdDiagram();
+  fitCanvasToElements();
   saveDfdStateToHistory('Load Property Leasing Context Preset');
   showToast("Loaded Property Leasing Context Diagram (Process 0.0)!", "success");
 }
@@ -903,6 +905,7 @@ function loadPropertyLeasingLevel1Preset() {
 
   renderDfd();
   auditDfdDiagram();
+  fitCanvasToElements();
   saveDfdStateToHistory('Load Property Leasing Level 1 Preset');
   showToast("Loaded Property Leasing Level 1 DFD (5 Processes, 5 Stores, 6 Entities)!", "success");
 }
@@ -3129,6 +3132,107 @@ function unpackDfdData(packed) {
   };
 }
 
+const PRESET_DEFAULT_COORDS = {
+  leasing_level1: {
+    e1: [30, 40], p1: [270, 35], d1: [270, 110], e2: [620, 35],
+    p2: [270, 180], d2: [270, 255], e3: [620, 180],
+    e4: [30, 340], p3: [270, 330], d3: [270, 405],
+    p4: [270, 480], d4: [270, 555], e5: [620, 480],
+    p5: [270, 630], d5: [270, 705], e6: [620, 630]
+  },
+  leasing_context: {
+    n1: [40, 50], n2: [40, 230], n3: [40, 410], n0: [330, 225],
+    n4: [620, 50], n5: [620, 230], n6: [620, 410]
+  },
+  pos: {
+    n1: [40, 80], n2: [270, 75], n3: [530, 80], n4: [40, 230],
+    n5: [270, 230], n6: [530, 225], n7: [530, 375]
+  }
+};
+
+function detectCurrentBasePreset() {
+  const nodeIds = new Set(dfdNodes.map(n => n.id));
+  const l1Nodes = ['e1','p1','d1','e2','p2','d2','e3','e4','p3','d3','p4','d4','e5','p5','d5','e6'];
+  if (l1Nodes.every(id => nodeIds.has(id)) && dfdNodes.length <= l1Nodes.length + 3) {
+    return 'leasing_level1';
+  }
+  const ctxNodes = ['n1','n2','n3','n0','n4','n5','n6'];
+  if (ctxNodes.every(id => nodeIds.has(id)) && dfdNodes.length <= ctxNodes.length + 2) {
+    return 'leasing_context';
+  }
+  const posNodes = ['n1','n2','n3','n4','n5','n6','n7'];
+  if (posNodes.every(id => nodeIds.has(id)) && dfdNodes.length <= posNodes.length + 2) {
+    return 'pos';
+  }
+  const selVal = document.getElementById('scenario-selector')?.value;
+  if (selVal && PRESET_DEFAULT_COORDS[selVal]) {
+    return selVal;
+  }
+  return null;
+}
+
+function applyPresetWithMoves(presetName, movesStr = '') {
+  const norm = (presetName || '').toLowerCase().trim();
+  const sel = document.getElementById('scenario-selector');
+
+  if (norm === 'leasing_level1' || norm === 'leasing_l1' || norm === 'leasing1') {
+    if (sel) sel.value = 'leasing_level1';
+    loadPropertyLeasingLevel1Preset();
+  } else if (norm === 'leasing_context' || norm === 'leasing_ctx' || norm === 'leasing0') {
+    if (sel) sel.value = 'leasing_context';
+    loadPropertyLeasingContextPreset();
+  } else if (norm === 'pos' || norm === 'ballsrus') {
+    if (sel) sel.value = 'pos';
+    loadPerfectDfdPreset();
+  } else if (norm === 'enroll') {
+    if (sel) sel.value = 'enroll';
+    changeScenario();
+  } else if (norm === 'atm') {
+    if (sel) sel.value = 'atm';
+    changeScenario();
+  } else if (norm === 'membership') {
+    if (sel) sel.value = 'membership';
+    changeScenario();
+  } else if (norm === 'inventory') {
+    if (sel) sel.value = 'inventory';
+    changeScenario();
+  } else if (norm === 'reporting') {
+    if (sel) sel.value = 'reporting';
+    changeScenario();
+  } else {
+    if (sel) sel.value = 'leasing_level1';
+    loadPropertyLeasingLevel1Preset();
+  }
+
+  // Apply moved node coordinates if present
+  if (movesStr && movesStr.trim()) {
+    const tokens = movesStr.trim().split(';');
+    let moveCount = 0;
+    tokens.forEach(tok => {
+      const parts = tok.split(':');
+      if (parts.length === 2) {
+        const id = parts[0].trim();
+        const coords = parts[1].split(',').map(Number);
+        if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+          const node = dfdNodes.find(n => n.id === id);
+          if (node) {
+            node.x = coords[0];
+            node.y = coords[1];
+            moveCount++;
+          }
+        }
+      }
+    });
+    if (moveCount > 0) {
+      renderDfd();
+      auditDfdDiagram();
+      saveDfdStateToHistory(`Loaded Preset (${moveCount} custom moved nodes)`);
+    }
+  }
+
+  fitCanvasToElements();
+}
+
 async function encodeDfdToCode(data) {
   try {
     const packed = packDfdData(data);
@@ -3144,13 +3248,16 @@ async function encodeDfdToCode(data) {
         for (let i = 0; i < bytes.length; i += chunk) {
           bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
         }
-        return "DFD2-" + btoa(bin);
+        // Base64URL-safe: replace '+' with '-', '/' with '_', strip '='
+        const b64 = btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        return "DFD2-" + b64;
       } catch (streamErr) {
         console.warn("Deflate failed, falling back to compact base64", streamErr);
       }
     }
-    // Fallback: compact base64
-    return "DFD2-" + btoa(unescape(encodeURIComponent(jsonStr)));
+    // Fallback: compact base64url
+    const b64 = btoa(unescape(encodeURIComponent(jsonStr))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return "DFD2-" + b64;
   } catch (err) {
     console.error("Encoding error:", err);
     return "";
@@ -3162,14 +3269,29 @@ async function decodeDfdFromCode(codeStr) {
   let raw = codeStr.trim();
   
   // Extract hash parameter if full link was pasted
-  const hashIdx = raw.indexOf('#dfd=');
-  if (hashIdx !== -1) raw = raw.substring(hashIdx + 5);
-  const shareIdx = raw.indexOf('#share=');
-  if (shareIdx !== -1) raw = raw.substring(shareIdx + 7);
-  const queryIdx = raw.indexOf('?dfd=');
-  if (queryIdx !== -1) raw = raw.substring(queryIdx + 5);
+  if (raw.includes('#')) {
+    raw = raw.substring(raw.indexOf('#') + 1);
+  }
+  if (raw.startsWith('dfd=') || raw.startsWith('share=')) {
+    raw = raw.substring(raw.indexOf('=') + 1);
+  }
 
-  raw = decodeURIComponent(raw);
+  // Check if it's a preset or delta string
+  if (raw.startsWith('preset=') || raw.startsWith('p=') || raw.includes('preset=') || raw.includes('&m=')) {
+    const params = new URLSearchParams(raw);
+    const pName = params.get('preset') || params.get('p') || 'leasing_level1';
+    const moves = params.get('m') || params.get('moves') || '';
+    applyPresetWithMoves(pName, moves);
+    return { nodes: dfdNodes, connections: dfdConnections };
+  }
+
+  // URL-decode if needed
+  try {
+    raw = decodeURIComponent(raw);
+  } catch (e) {
+    // ignore
+  }
+  raw = raw.trim();
 
   // If raw JSON string was pasted directly
   if (raw.startsWith('{')) {
@@ -3179,7 +3301,11 @@ async function decodeDfdFromCode(codeStr) {
 
   // Format 1: New Compressed Format "DFD2-"
   if (raw.startsWith('DFD2-')) {
-    const b64 = raw.substring(5);
+    let b64 = raw.substring(5).trim();
+    // Convert URL-safe Base64 back to standard
+    b64 = b64.replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '+');
+    while (b64.length % 4 !== 0) b64 += '=';
+
     const bin = atob(b64);
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -3191,19 +3317,27 @@ async function decodeDfdFromCode(codeStr) {
         const decompStream = blob.stream().pipeThrough(new DecompressionStream('deflate-raw'));
         jsonStr = await new Response(decompStream).text();
       } catch (decompErr) {
-        jsonStr = decodeURIComponent(escape(bin));
+        console.warn("DecompressionStream error:", decompErr);
       }
-    } else {
-      jsonStr = decodeURIComponent(escape(bin));
     }
-    const packed = JSON.parse(jsonStr);
-    return unpackDfdData(packed);
+    if (!jsonStr) {
+      try {
+        jsonStr = decodeURIComponent(escape(bin));
+      } catch (e) {
+        // Fallback
+      }
+    }
+    if (jsonStr) {
+      const packed = JSON.parse(jsonStr);
+      return unpackDfdData(packed);
+    }
   }
 
   // Format 2: Legacy "DFD-" Base64 format (100% backward compatibility)
   if (raw.startsWith('DFD-')) {
-    raw = raw.substring(4);
-    const binaryStr = atob(raw);
+    let b64 = raw.substring(4).trim().replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '+');
+    while (b64.length % 4 !== 0) b64 += '=';
+    const binaryStr = atob(b64);
     const jsonStr = decodeURIComponent(binaryStr);
     const parsed = JSON.parse(jsonStr);
     return unpackDfdData(parsed);
@@ -3211,7 +3345,9 @@ async function decodeDfdFromCode(codeStr) {
 
   // Generic Base64 fallback
   try {
-    const binaryStr = atob(raw);
+    let b64 = raw.replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '+');
+    while (b64.length % 4 !== 0) b64 += '=';
+    const binaryStr = atob(b64);
     const jsonStr = decodeURIComponent(binaryStr);
     const parsed = JSON.parse(jsonStr);
     return unpackDfdData(parsed);
@@ -3221,10 +3357,38 @@ async function decodeDfdFromCode(codeStr) {
 }
 
 async function generateCurrentWorkspaceShare(showToastFeedback = false) {
-  const data = getDfdExportData();
-  const code = await encodeDfdToCode(data);
   const baseUrl = window.location.origin + window.location.pathname;
-  const cleanUrl = `${baseUrl}#dfd=${encodeURIComponent(code)}`;
+  const basePreset = detectCurrentBasePreset();
+  let cleanUrl = '';
+  let code = '';
+
+  if (basePreset && PRESET_DEFAULT_COORDS[basePreset]) {
+    const defMap = PRESET_DEFAULT_COORDS[basePreset];
+    const moved = [];
+    dfdNodes.forEach(n => {
+      if (defMap[n.id]) {
+        const [dx, dy] = defMap[n.id];
+        const curX = Math.round(n.x);
+        const curY = Math.round(n.y);
+        if (Math.abs(curX - dx) > 2 || Math.abs(curY - dy) > 2) {
+          moved.push(`${n.id}:${curX},${curY}`);
+        }
+      }
+    });
+
+    if (moved.length === 0) {
+      cleanUrl = `${baseUrl}#preset=${basePreset}`;
+      code = `#preset=${basePreset}`;
+    } else {
+      cleanUrl = `${baseUrl}#preset=${basePreset}&m=${moved.join(';')}`;
+      code = `#preset=${basePreset}&m=${moved.join(';')}`;
+    }
+  } else {
+    // Fully custom diagram
+    const data = getDfdExportData();
+    code = await encodeDfdToCode(data);
+    cleanUrl = `${baseUrl}#dfd=${code}`;
+  }
 
   const linkInput = document.getElementById('share-link-input');
   const codeInput = document.getElementById('share-code-input');
@@ -3234,11 +3398,12 @@ async function generateCurrentWorkspaceShare(showToastFeedback = false) {
   if (codeInput) codeInput.value = code;
   if (badgeEl) {
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    badgeEl.innerText = `Workspace Snapshot Ready (${dfdNodes.length} nodes, ${dfdConnections.length} flows • ${timeStr})`;
+    const charCount = cleanUrl.length;
+    badgeEl.innerText = `Workspace Link Ready (${dfdNodes.length} nodes, ${dfdConnections.length} flows • ${charCount} chars • Fits in 1 line • ${timeStr})`;
     badgeEl.style.display = 'inline-block';
   }
   if (showToastFeedback) {
-    showToast(`Generated new link & code for current workspace (${dfdNodes.length} elements)!`, "success");
+    showToast(`Generated ultra-short workspace link (${cleanUrl.length} chars)!`, "success");
   }
 }
 
@@ -3246,7 +3411,8 @@ async function openSaveShareModal() {
   const modal = document.getElementById('save-share-modal');
   if (!modal) return;
 
-  const scenarioVal = document.getElementById('scenario-selector')?.value || 'pos';
+  const detectedPreset = detectCurrentBasePreset();
+  const scenarioVal = detectedPreset || document.getElementById('scenario-selector')?.value || 'leasing_level1';
   const baseUrl = window.location.origin + window.location.pathname;
 
   // Option 1: Clean 1-Line URL (ultra-short, fits in 1 line)
@@ -3480,49 +3646,24 @@ function handleDfdFileUpload(event) {
 
 async function checkUrlHashForSharedDiagram() {
   if (window.location.hash) {
-    const hash = window.location.hash;
+    let hash = window.location.hash;
+    if (hash.startsWith('#')) hash = hash.substring(1);
 
-    // 1. Ultra-clean 1-line preset link (#preset=...)
-    if (hash.startsWith('#preset=')) {
-      const presetName = hash.substring(8).trim().toLowerCase();
-      const selector = document.getElementById('scenario-selector');
-      if (presetName === 'leasing_level1' || presetName === 'leasing_l1' || presetName === 'leasing1') {
-        if (selector) selector.value = 'leasing_level1';
-        loadPropertyLeasingLevel1Preset();
-        showToast("Loaded Property Leasing Level 1 DFD!", "success");
-        return true;
-      } else if (presetName === 'leasing_context' || presetName === 'leasing_ctx' || presetName === 'leasing0') {
-        if (selector) selector.value = 'leasing_context';
-        loadPropertyLeasingContextPreset();
-        showToast("Loaded Property Leasing Context Diagram!", "success");
-        return true;
-      } else if (presetName === 'pos' || presetName === 'ballsrus') {
-        if (selector) selector.value = 'pos';
-        changeScenario();
-        showToast("Loaded Point of Sale (P1.0) Preset!", "success");
-        return true;
-      } else if (presetName === 'membership') {
-        if (selector) selector.value = 'membership';
-        changeScenario();
-        showToast("Loaded Membership Management (P2.0) Preset!", "success");
-        return true;
-      } else if (presetName === 'inventory') {
-        if (selector) selector.value = 'inventory';
-        changeScenario();
-        showToast("Loaded Inventory Reordering (P3.0) Preset!", "success");
-        return true;
-      } else if (presetName === 'reporting') {
-        if (selector) selector.value = 'reporting';
-        changeScenario();
-        showToast("Loaded Management Reporting (P4.0) Preset!", "success");
-        return true;
-      }
+    // 1. Preset or Delta Link (preset=... or p=... or m=...)
+    if (hash.startsWith('preset=') || hash.startsWith('p=') || hash.includes('&m=') || hash.includes('moves=')) {
+      const params = new URLSearchParams(hash);
+      const presetName = params.get('preset') || params.get('p') || 'leasing_level1';
+      const moves = params.get('m') || params.get('moves') || '';
+      applyPresetWithMoves(presetName, moves);
+      showToast(`Loaded ${presetName.toUpperCase()} diagram!`, "success");
+      return true;
     }
 
-    // 2. Encoded custom diagram link (#dfd=... or #share=...)
-    if (hash.startsWith('#dfd=') || hash.startsWith('#share=')) {
+    // 2. Encoded custom diagram link (dfd=... or share=...)
+    if (hash.startsWith('dfd=') || hash.startsWith('share=')) {
       try {
-        const code = hash.split('=')[1];
+        const eqIdx = hash.indexOf('=');
+        const code = eqIdx !== -1 ? hash.substring(eqIdx + 1) : '';
         if (code) {
           const data = await decodeDfdFromCode(code);
           if (data && (data.nodes || data.dfdNodes)) {
@@ -3565,7 +3706,7 @@ window.addEventListener('keydown', (e) => {
 
 // React to Hash Changes
 window.addEventListener('hashchange', () => {
-  if (window.location.hash.startsWith('#preset=') || window.location.hash.startsWith('#dfd=') || window.location.hash.startsWith('#share=')) {
+  if (window.location.hash) {
     checkUrlHashForSharedDiagram();
   }
 });

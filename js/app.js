@@ -8,12 +8,29 @@ let currentCardIndex = 0;
 let isCardFlipped = false;
 
 function switchTab(tabId) {
-  document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav-tab-btn').forEach(el => el.classList.remove('active'));
+  let targetId = tabId;
+  if (!document.getElementById(targetId) && document.getElementById(targetId + '-tab')) {
+    targetId = targetId + '-tab';
+  }
+  const el = document.getElementById(targetId);
+  if (!el) return;
 
-  document.getElementById(tabId).classList.add('active');
-  const targetBtn = Array.from(document.querySelectorAll('.nav-tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+  document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+  document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+
+  el.classList.add('active');
+  const targetBtn = Array.from(document.querySelectorAll('.nav-tab-btn')).find(b => {
+    const onclick = b.getAttribute('onclick') || '';
+    return onclick.includes(targetId) || onclick.includes(tabId);
+  });
   if (targetBtn) targetBtn.classList.add('active');
+
+  if (targetId === 'dfd-tab') {
+    setTimeout(() => {
+      if (typeof updateCanvasViewBox === 'function') updateCanvasViewBox();
+      if (typeof fitCanvasToElements === 'function') fitCanvasToElements();
+    }, 60);
+  }
 }
 
 function loadRandomQuestion() {
@@ -242,8 +259,8 @@ function randomCard() {
 window.addEventListener('DOMContentLoaded', async () => {
   loadRandomQuestion();
   const hash = window.location.hash || '';
-  if (hash.includes('preset=') || hash.includes('dfd=') || hash.includes('share=')) {
-    switchTab('dfd');
+  if (hash.includes('preset=') || hash.includes('dfd=') || hash.includes('share=') || hash.includes('p=') || hash.includes('m=')) {
+    switchTab('dfd-tab');
     if (typeof checkUrlHashForSharedDiagram === 'function') {
       await checkUrlHashForSharedDiagram();
     }
