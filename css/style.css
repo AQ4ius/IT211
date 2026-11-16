@@ -536,13 +536,40 @@ textarea.essay-input:focus {
 .canvas-top-bar {
   background: #f8fafc;
   border-bottom: 1px solid var(--border);
-  padding: 8px 14px;
+  padding: 8px 12px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
+  -webkit-overflow-scrolling: touch;
 }
 
-.canvas-mode-group { display: flex; gap: 6px; }
+.canvas-top-bar::-webkit-scrollbar {
+  height: 6px;
+}
+
+.canvas-top-bar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.canvas-top-bar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.canvas-top-bar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.canvas-mode-group {
+  display: inline-flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
 
 .canvas-mode-btn {
   border: 1px solid var(--border);
@@ -553,12 +580,19 @@ textarea.essay-input:focus {
   font-weight: 700;
   cursor: pointer;
   color: var(--slate);
+  flex-shrink: 0;
 }
 
 .canvas-mode-btn.active {
   background: var(--primary);
   color: #ffffff;
   border-color: var(--primary);
+}
+
+.canvas-action-group {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 /* Canvas Zoom Controls */
@@ -568,6 +602,11 @@ textarea.essay-input:focus {
   gap: 3px;
   background: #ffffff;
   border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+}
   border-radius: 8px;
   padding: 2px 6px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);

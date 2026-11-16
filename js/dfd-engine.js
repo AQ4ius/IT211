@@ -3211,13 +3211,22 @@ async function openSaveShareModal() {
   if (!modal) return;
 
   const data = getDfdExportData();
-  const code = await encodeDfdToCode(data);
-  const cleanUrl = window.location.origin + window.location.pathname + '#dfd=' + encodeURIComponent(code);
+  const scenarioVal = document.getElementById('scenario-selector')?.value || 'pos';
+  const baseUrl = window.location.origin + window.location.pathname;
 
+  // Option 1: Clean 1-Line URL (ultra-short, fits in 1 line)
+  const shortPresetUrl = `${baseUrl}#preset=${scenarioVal}`;
+
+  // Option 2: Full Custom State Link & Code
+  const code = await encodeDfdToCode(data);
+  const cleanUrl = `${baseUrl}#dfd=${encodeURIComponent(code)}`;
+
+  const presetLinkInput = document.getElementById('share-preset-link-input');
   const linkInput = document.getElementById('share-link-input');
   const codeInput = document.getElementById('share-code-input');
   const importInput = document.getElementById('import-code-input');
 
+  if (presetLinkInput) presetLinkInput.value = shortPresetUrl;
   if (linkInput) linkInput.value = cleanUrl;
   if (codeInput) codeInput.value = code;
   if (importInput) importInput.value = '';
@@ -3229,6 +3238,42 @@ async function openSaveShareModal() {
 function closeSaveShareModal() {
   const modal = document.getElementById('save-share-modal');
   if (modal) modal.classList.remove('active');
+}
+
+function copyPresetShareLink() {
+  const input = document.getElementById('share-preset-link-input');
+  if (!input) return;
+  input.select();
+  navigator.clipboard.writeText(input.value).then(() => {
+    showToast("1-Line Short Link copied to clipboard!", "success");
+  }).catch(() => {
+    document.execCommand('copy');
+    showToast("1-Line Short Link copied to clipboard!", "success");
+  });
+}
+
+function copyShareLink() {
+  const input = document.getElementById('share-link-input');
+  if (!input) return;
+  input.select();
+  navigator.clipboard.writeText(input.value).then(() => {
+    showToast("Diagram link copied to clipboard!", "success");
+  }).catch(() => {
+    document.execCommand('copy');
+    showToast("Diagram link copied to clipboard!", "success");
+  });
+}
+
+function copyDiagramCode() {
+  const input = document.getElementById('share-code-input');
+  if (!input) return;
+  input.select();
+  navigator.clipboard.writeText(input.value).then(() => {
+    showToast("Diagram code copied to clipboard!", "success");
+  }).catch(() => {
+    document.execCommand('copy');
+    showToast("Diagram code copied to clipboard!", "success");
+  });
 }
 
 function saveToSlot(slotNum) {
@@ -3407,6 +3452,45 @@ function handleDfdFileUpload(event) {
 async function checkUrlHashForSharedDiagram() {
   if (window.location.hash) {
     const hash = window.location.hash;
+
+    // 1. Ultra-clean 1-line preset link (#preset=...)
+    if (hash.startsWith('#preset=')) {
+      const presetName = hash.substring(8).trim().toLowerCase();
+      const selector = document.getElementById('scenario-selector');
+      if (presetName === 'leasing_level1' || presetName === 'leasing_l1' || presetName === 'leasing1') {
+        if (selector) selector.value = 'leasing_level1';
+        loadPropertyLeasingLevel1Preset();
+        showToast("Loaded Property Leasing Level 1 DFD!", "success");
+        return true;
+      } else if (presetName === 'leasing_context' || presetName === 'leasing_ctx' || presetName === 'leasing0') {
+        if (selector) selector.value = 'leasing_context';
+        loadPropertyLeasingContextPreset();
+        showToast("Loaded Property Leasing Context Diagram!", "success");
+        return true;
+      } else if (presetName === 'pos' || presetName === 'ballsrus') {
+        if (selector) selector.value = 'pos';
+        changeScenario();
+        showToast("Loaded Point of Sale (P1.0) Preset!", "success");
+        return true;
+      } else if (presetName === 'membership') {
+        if (selector) selector.value = 'membership';
+        changeScenario();
+        showToast("Loaded Membership Management (P2.0) Preset!", "success");
+        return true;
+      } else if (presetName === 'inventory') {
+        if (selector) selector.value = 'inventory';
+        changeScenario();
+        showToast("Loaded Inventory Reordering (P3.0) Preset!", "success");
+        return true;
+      } else if (presetName === 'reporting') {
+        if (selector) selector.value = 'reporting';
+        changeScenario();
+        showToast("Loaded Management Reporting (P4.0) Preset!", "success");
+        return true;
+      }
+    }
+
+    // 2. Encoded custom diagram link (#dfd=... or #share=...)
     if (hash.startsWith('#dfd=') || hash.startsWith('#share=')) {
       try {
         const code = hash.split('=')[1];
@@ -3452,7 +3536,7 @@ window.addEventListener('keydown', (e) => {
 
 // React to Hash Changes
 window.addEventListener('hashchange', () => {
-  if (window.location.hash.startsWith('#dfd=') || window.location.hash.startsWith('#share=')) {
+  if (window.location.hash.startsWith('#preset=') || window.location.hash.startsWith('#dfd=') || window.location.hash.startsWith('#share=')) {
     checkUrlHashForSharedDiagram();
   }
 });

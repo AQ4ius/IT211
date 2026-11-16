@@ -239,10 +239,14 @@ function randomCard() {
 }
 
 // Window load init
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   loadRandomQuestion();
-  if (typeof checkUrlHashForSharedDiagram === 'function' && checkUrlHashForSharedDiagram()) {
-    // Loaded shared diagram from URL hash
+  const hash = window.location.hash || '';
+  if (hash.includes('preset=') || hash.includes('dfd=') || hash.includes('share=')) {
+    switchTab('dfd');
+    if (typeof checkUrlHashForSharedDiagram === 'function') {
+      await checkUrlHashForSharedDiagram();
+    }
   } else {
     loadPerfectDfdPreset();
   }

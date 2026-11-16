@@ -302,12 +302,12 @@
             </button>
           </div>
 
-          <button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 5px;" onclick="openSaveShareModal()" title="Save diagram or generate custom share link/code without an account">
+          <button class="btn btn-primary" style="flex-shrink: 0; padding: 5px 12px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 5px;" onclick="openSaveShareModal()" title="Save diagram or generate custom share link/code without an account">
             <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             <span>Save / Share</span>
           </button>
 
-          <span style="font-size: 0.75rem; font-weight: 700; color: var(--slate);" id="canvas-status">Mode: Select &amp; Drag</span>
+          <span style="flex-shrink: 0; font-size: 0.75rem; font-weight: 700; color: var(--slate); padding-right: 10px;" id="canvas-status">Mode: Select &amp; Drag</span>
         </div>
 
         <!-- SVG Interactive Surface -->
@@ -628,21 +628,42 @@
         </div>
       </div>
 
-      <!-- Option 1: Shareable Link -->
+      <!-- Option 1: 1-Line Clean Short Link -->
       <div class="save-share-card">
+        <div class="save-share-card-header">
+          <span class="save-share-title" style="color: #1e40af;">
+            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Option 1: 1-Line Clean Short Link (100% Short &bull; Fits in 1 Line)
+          </span>
+          <span class="badge badge-green">Recommended</span>
+        </div>
+        <p style="font-size: 0.74rem; color: #64748b; margin: 4px 0 8px;">
+          Ultra-short single-line web link. Never overflows into multiple pages:
+        </p>
+        <div style="display: flex; gap: 6px;">
+          <input type="text" id="share-preset-link-input" class="modal-input" readonly style="font-size: 0.75rem; background: #f8fafc; font-family: monospace; padding: 7px 10px; font-weight: 600; color: #1e40af;">
+          <button class="btn btn-primary" type="button" onclick="copyPresetShareLink()" style="flex-shrink: 0; padding: 7px 14px; font-size: 0.74rem; display: flex; align-items: center; gap: 4px;">
+            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy Short Link
+          </button>
+        </div>
+      </div>
+
+      <!-- Option 2: Full Custom State Link -->
+      <div class="save-share-card" style="margin-top: 12px;">
         <div class="save-share-card-header">
           <span class="save-share-title">
             <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            Option 1: Custom Shareable Web Link
+            Option 2: Custom Encoded Diagram Link
           </span>
-          <span class="badge badge-blue">Instant Open</span>
+          <span class="badge badge-blue">Custom Layout</span>
         </div>
         <p style="font-size: 0.74rem; color: #64748b; margin: 4px 0 8px;">
-          Anyone who visits this link will immediately see and load your exact diagram, including all custom bend points, labels, and layouts.
+          Encodes custom element moves, bend points, and node additions:
         </p>
         <div style="display: flex; gap: 6px;">
           <input type="text" id="share-link-input" class="modal-input" readonly style="font-size: 0.75rem; background: #f8fafc; font-family: monospace; padding: 7px 10px;">
-          <button class="btn btn-primary" type="button" onclick="copyShareLink()" style="flex-shrink: 0; padding: 7px 14px; font-size: 0.74rem; display: flex; align-items: center; gap: 4px;">
+          <button class="btn btn-outline" type="button" onclick="copyShareLink()" style="flex-shrink: 0; padding: 7px 14px; font-size: 0.74rem; display: flex; align-items: center; gap: 4px;">
             <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             Copy Link
           </button>
