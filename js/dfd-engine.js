@@ -3738,3 +3738,10 @@ window.addEventListener('hashchange', () => {
     checkUrlHashForSharedDiagram();
   }
 });
+
+// Close modals when clicking the darkened backdrop
+document.addEventListener('click', (e) => {
+  if (e.target && e.target.classList && e.target.classList.contains('modal-overlay')) {
+    e.target.classList.remove('active');
+  }
+});
